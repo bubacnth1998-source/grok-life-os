@@ -39,10 +39,20 @@ class SecurityMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         ip = request.client.host if request.client else "x"
         now = time.time()
-        _buckets[ip] = [t for t in _buckets[ip] if now - t < 60]
-        if len(_buckets[ip]) >= 180:
+        bucket = _buckets.get(ip)
+        if bucket is None:
+            # Bound memory use under requests with many spoofed/unique source IPs.
+            if len(_buckets) >= 10000:
+                for key, timestamps in list(_buckets.items()):
+                    if not timestamps or now - timestamps[-1] >= 60:
+                        _buckets.pop(key, None)
+            if len(_buckets) >= 10000:
+                return JSONResponse({"detail": "Rate limit capacity reached"}, status_code=429)
+            bucket = _buckets[ip]
+        bucket[:] = [timestamp for timestamp in bucket if now - timestamp < 60]
+        if len(bucket) >= 180:
             return JSONResponse({"detail": "Rate limit"}, status_code=429)
-        _buckets[ip].append(now)
+        bucket.append(now)
         response = await call_next(request)
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
