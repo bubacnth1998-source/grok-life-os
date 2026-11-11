@@ -154,6 +154,7 @@ async function loadWorkspace() {
       api("/business/clients"), api("/business/invoices"), api("/automation/rules"), api("/intelligence/snapshot")
     ]);
     host.innerHTML = `
+      <section class="rounded-xl border border-slate-800 p-3"><h3 class="font-medium">Copia de seguridad</h3><p class="text-xs text-slate-400 mt-1">Exporta tus datos o restaura una copia JSON. La importación añade registros; no sobrescribe los existentes.</p><div class="flex flex-wrap gap-2 mt-3"><button id="ws-export" class="rounded-lg bg-slate-800 px-3 py-2">Exportar copia</button><label class="rounded-lg bg-slate-800 px-3 py-2 cursor-pointer" for="ws-import">Importar copia<input id="ws-import" type="file" accept="application/json,.json" class="sr-only" /></label></div><p id="ws-backup-status" class="text-xs text-slate-400 mt-2" aria-live="polite"></p></section>
       <section class="rounded-xl border border-slate-800 p-3"><div class="flex justify-between items-center"><h3 class="font-medium">Hábitos</h3><button id="ws-habit" class="rounded-lg bg-slate-800 px-3 py-2">+ Añadir</button></div><ul class="mt-2 space-y-2">${habits.map(x=>`<li class="flex justify-between gap-2"><span>${esc(x.name)} · ${esc(x.frequency)}</span><button data-habit-log="${Number(x.id)}" class="rounded-lg bg-slate-800 px-3 py-1">${x.completed_today ? "Hecho" : "Completar"}</button></li>`).join("") || "<li class='text-slate-500'>Sin hábitos</li>"}</ul></section>
       <section class="rounded-xl border border-slate-800 p-3"><div class="flex justify-between items-center"><h3 class="font-medium">Viajes</h3><button id="ws-trip" class="rounded-lg bg-slate-800 px-3 py-2">+ Viaje</button></div><ul class="mt-2">${trips.map(x=>`<li>${esc(x.title)} · ${esc(x.destination || "Destino pendiente")} · ${esc(x.status)}</li>`).join("") || "<li class='text-slate-500'>Sin viajes</li>"}</ul></section>
       <section class="rounded-xl border border-slate-800 p-3"><div class="flex justify-between items-center"><h3 class="font-medium">Aprendizaje</h3><button id="ws-course" class="rounded-lg bg-slate-800 px-3 py-2">+ Curso</button></div><ul class="mt-2">${courses.map(x=>`<li>${esc(x.title)} · ${esc(x.progress)}%</li>`).join("") || "<li class='text-slate-500'>Sin cursos</li>"}</ul></section>
@@ -161,6 +162,43 @@ async function loadWorkspace() {
       <section class="rounded-xl border border-slate-800 p-3"><div class="flex justify-between items-center"><h3 class="font-medium">Negocio</h3><button id="ws-client" class="rounded-lg bg-slate-800 px-3 py-2">+ Cliente</button></div><p class="text-sm text-slate-400 mt-1">${clients.length} clientes · ${invoices.length} facturas</p><ul class="mt-2">${clients.map(x=>`<li>${esc(x.name)} · ${esc(x.email || "Sin email")}</li>`).join("") || "<li class='text-slate-500'>Sin clientes</li>"}</ul></section>
       <section class="rounded-xl border border-slate-800 p-3"><h3 class="font-medium">Automatizaciones</h3><ul class="mt-2">${rules.map(x=>`<li>${esc(x.name)} · ${esc(x.trigger_type)} · ${x.is_active ? "Activa" : "Pausada"}</li>`).join("") || "<li class='text-slate-500'>Sin reglas</li>"}</ul><p class="text-xs text-slate-500 mt-2">Las reglas actuales solo se ejecutan manualmente o bajo confirmación; no hay scheduler en segundo plano.</p></section>
       <section class="rounded-xl border border-slate-800 p-3"><h3 class="font-medium">Inteligencia</h3><ul class="mt-2">${intelligence.facts.map(x=>`<li>${esc(x.text)}</li>`).join("")}</ul><p class="text-xs text-slate-500 mt-2">${esc(intelligence.disclaimer)}</p></section>`;
+    document.getElementById("ws-export").onclick = async () => {
+      const status = document.getElementById("ws-backup-status");
+      try {
+        const backup = await api("/backup/export");
+        const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "grok-life-os-backup-" + new Date().toISOString().slice(0, 10) + ".json";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+        status.textContent = "Copia exportada. Guárdala en un lugar seguro.";
+      } catch (error) { status.textContent = "No se pudo exportar: " + error.message; }
+    };
+    document.getElementById("ws-import").onchange = async (event) => {
+      const file = event.target.files?.[0];
+      const status = document.getElementById("ws-backup-status");
+      if (!file) return;
+      if (file.size > 10 * 1024 * 1024) {
+        status.textContent = "Archivo demasiado grande (máximo 10 MB).";
+        event.target.value = "";
+        return;
+      }
+      if (!confirm("La copia se importará añadiendo registros a tu cuenta actual. ¿Continuar?")) {
+        event.target.value = "";
+        return;
+      }
+      try {
+        const backup = JSON.parse(await file.text());
+        const result = await api("/backup/import", { method: "POST", body: JSON.stringify(backup) });
+        status.textContent = "Importación completada: " + Object.values(result.created || {}).reduce((a, b) => a + b, 0) + " registros añadidos.";
+        await loadWorkspace();
+      } catch (error) { status.textContent = "No se pudo importar: " + error.message; }
+      finally { event.target.value = ""; }
+    };
     document.getElementById("ws-habit").onclick = async () => { const name=prompt("Nombre del hábito"); if(name?.trim()){await api("/habits",{method:"POST",body:JSON.stringify({name})});loadWorkspace();} };
     document.getElementById("ws-trip").onclick = async () => { const title=prompt("Nombre del viaje"); if(!title?.trim())return; const destination=prompt("Destino")||""; await api("/travel/trips",{method:"POST",body:JSON.stringify({title,destination})});loadWorkspace(); };
     document.getElementById("ws-course").onclick = async () => { const title=prompt("Nombre del curso"); if(title?.trim()){await api("/learning/courses",{method:"POST",body:JSON.stringify({title})});loadWorkspace();} };
