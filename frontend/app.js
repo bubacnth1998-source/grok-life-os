@@ -94,7 +94,7 @@ async function loadTime() {
     document.getElementById("add-event").onclick = async () => {
       const title = prompt("Título del evento");
       if (!title?.trim()) return;
-      const when = prompt("Fecha y hora local (AAAA-MM-DDTHH:MM)", new Date(Date.now() + 3600000).toISOString().slice(0, 16));
+      const when = prompt("Fecha y hora local (AAAA-MM-DDTHH:MM)", new Date(Date.now() + 3600000 - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16));
       if (!when || !/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}$/.test(when)) return;
       const start_at = new Date(when).toISOString();
       await api("/time/events", { method: "POST", body: JSON.stringify({ title: title.trim(), start_at }) });
