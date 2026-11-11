@@ -4,7 +4,7 @@ Implementación independiente de Grok (xAI). Repositorio: `grok-life-os`.
 
 ## Estado verificado
 
-- **Pruebas definidas:** 6 funciones en `tests/test_core.py`; el resultado de CI está pendiente de confirmación.
+- **Pruebas:** 9 tests aprobados en GitHub Actions (última ejecución completa: commit `35fb7f0`).
 - **Stack:** FastAPI + SQLAlchemy + SQLite + frontend web adaptable.
 - **Ejecución principal:** local en Linux/Chromebook, sin servicios de pago obligatorios.
 - **Preview Vercel:** disponible para validar la interfaz y las rutas HTTP. No equivale a producción ni garantiza persistencia duradera en un filesystem efímero.
