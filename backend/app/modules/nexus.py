@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session
 from app.db.base import get_db
 from app.api.deps import get_current_user
 from app.domain.models import User
-from app.core.config import settings
 from app.modules.core import dashboard
 
 router = APIRouter(prefix="/nexus", tags=["nexus"])
@@ -15,7 +14,12 @@ class ChatIn(BaseModel):
 
 @router.get("/status")
 def status():
-    return {"assistant": "NEXUS", "mode": "llm" if settings.llm_enabled else "rules", "llm_enabled": settings.llm_enabled, "note": "Sin API key el asistente usa solo reglas y datos locales."}
+    return {
+        "assistant": "NEXUS",
+        "mode": "rules",
+        "llm_enabled": False,
+        "note": "NEXUS usa reglas y datos locales. La integración con un proveedor LLM aún no está implementada; configurar una API key no activa llamadas externas.",
+    }
 
 @router.post("/chat")
 def chat(body: ChatIn, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
