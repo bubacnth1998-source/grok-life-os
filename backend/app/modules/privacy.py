@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from app.db.base import get_db
 from app.api.deps import get_current_user
-from app.domain.models import User
+from app.domain.models import User, AuditLog, GovernanceEvent
 from app.core.security import verify_password
 from app.modules.governance import log_event
 
@@ -30,6 +30,11 @@ def delete_account(body: DeleteIn, db: Session = Depends(get_db), user: User = D
         raise HTTPException(400, "Password incorrect")
     log_event(db, user.id, "user", "irreversible", "privacy.delete_account", True)
     uid = user.id
+    # These audit tables intentionally keep nullable user references. Remove
+    # account-linked rows explicitly so a future SQLite ID reuse cannot expose
+    # the deleted account's audit history to another user.
+    db.query(AuditLog).filter(AuditLog.user_id == uid).delete(synchronize_session=False)
+    db.query(GovernanceEvent).filter(GovernanceEvent.user_id == uid).delete(synchronize_session=False)
     db.delete(user)
     db.commit()
     return {"ok": True, "deleted_user_id": uid}
