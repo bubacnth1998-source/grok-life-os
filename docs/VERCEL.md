@@ -1,15 +1,25 @@
-# Preview en Vercel
+# Vercel preview
 
-Repo: https://github.com/bubacnth1998-source/grok-life-os
+## Fix applied for build error
 
-## Limitación crítica
-SQLite en Vercel es **efímero**. El preview sirve para probar UI/API; los datos pueden borrarse entre arranques en frío.
+Vercel said: no FastAPI entrypoint in default locations.
 
-## Env
+Now the repo declares:
+
+```toml
+[tool.vercel]
+entrypoint = "api.index:app"
 ```
-LIFE_OS_SECRET_KEY=<secreto-largo>
-DATABASE_URL=sqlite:////tmp/grok_life_os.db
-```
 
-## Prompt para ChatGPT
-Despliega `bubacnth1998-source/grok-life-os` como preview en Vercel. Entry: `backend/app/main.py`. Solo preview, no producción definitiva.
+`api/index.py` adds `backend/` to `sys.path` and re-exports `app` from `app.main`.
+
+## Redeploy
+
+1. Push is on `main` (this fix).
+2. In Vercel → Deployments → Redeploy the latest commit, **or** wait for auto-deploy from GitHub.
+3. Env (optional but recommended):
+   - `LIFE_OS_SECRET_KEY` = long random string
+   - `DATABASE_URL` = `sqlite:////tmp/grok_life_os.db`
+
+## Note
+SQLite on Vercel is ephemeral (data may reset on cold start). Preview only.
