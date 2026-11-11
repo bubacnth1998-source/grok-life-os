@@ -56,6 +56,14 @@ def test_security_headers_are_present():
     assert response.headers["permissions-policy"] == "camera=(), geolocation=(), microphone=(self)"
 
 
+def test_nexus_does_not_claim_unimplemented_llm_mode():
+    status = client.get("/api/v1/nexus/status")
+    assert status.status_code == 200
+    assert status.json()["mode"] == "rules"
+    assert status.json()["llm_enabled"] is False
+    assert "aún no está implementada" in status.json()["note"]
+
+
 def test_health():
     assert client.get("/health").json()["status"] == "ok"
 
