@@ -1,25 +1,22 @@
-# Vercel preview
+# Vercel — estado y política de despliegue
 
-## Fix applied for build error
+## Estado actual
 
-Vercel said: no FastAPI entrypoint in default locations.
+Vercel **no está habilitado para datos personales ni producción**. El backend rechaza el arranque cuando detecta VERCEL=1 sin una clave propia y una base PostgreSQL duradera. SQLite en /tmp está bloqueado porque el almacenamiento serverless es efímero.
 
-Now the repo declares:
+El entrypoint de la aplicación está definido en pyproject.toml como backend.app.main:app.
 
-```toml
-[tool.vercel]
-entrypoint = "api.index:app"
-```
+## Requisitos para habilitar Vercel en el futuro
 
-`api/index.py` adds `backend/` to `sys.path` and re-exports `app` from `app.main`.
+1. PostgreSQL duradero y aislado, provisionado expresamente para Grok.
+2. DATABASE_URL con driver PostgreSQL instalado.
+3. LIFE_OS_SECRET_KEY único y aleatorio, de al menos 32 caracteres.
+4. LIFE_OS_ENV=production, LIFE_OS_DEBUG=false y orígenes CORS explícitos.
+5. Pruebas de migración, persistencia tras cold start, aislamiento multiusuario y backup/restore.
+6. Revisión de almacenamiento de medios: el filesystem de funciones serverless no es persistente.
 
-## Redeploy
+No crear bases de datos, no reutilizar las de Vision Finance o ICT Trading Intelligence y no publicar en producción sin autorización expresa.
 
-1. Push is on `main` (this fix).
-2. In Vercel → Deployments → Redeploy the latest commit, **or** wait for auto-deploy from GitHub.
-3. Env (optional but recommended):
-   - `LIFE_OS_SECRET_KEY` = long random string
-   - `DATABASE_URL` = `sqlite:////tmp/grok_life_os.db`
+## Estado de la rama
 
-## Note
-SQLite on Vercel is ephemeral (data may reset on cold start). Preview only.
+Los cambios se trabajan en fix/vercel-fastapi-entrypoint. No se debe indicar que el fix está en main ni fusionar ramas sin autorización.
