@@ -1,6 +1,6 @@
 # STATUS
 
-**Última verificación CI:** GitHub Actions aprobó la suite completa en el commit `ddd5337bd61e8fc2c95224b29e0dd02bc2521544` (run 42943373682, job `test`, conclusión `success`). También pasó el test corregido de configuración de secretos en `dc4f858`.
+**Última verificación CI histórica:** commits `6c39d4f`, `abd40bc`, `536b422`, `cc2a956` y `6830017` tienen ejecuciones aprobadas. Los cambios de protección Vercel más recientes están pendientes de su ejecución CI; no se consideran verificados hasta que terminen.
 
 ## Repositorio y despliegue
 
@@ -17,12 +17,14 @@
 - SQLite con claves foráneas activadas.
 - CORS cerrado por defecto y rechazo de wildcard.
 - Validación de configuración de producción: DEBUG desactivado y secreto único de al menos 32 caracteres.
+- Protección de despliegue: Vercel rechaza el secreto de desarrollo y SQLite bajo `/tmp` incluso en previews, evitando aceptar datos con almacenamiento efímero.
+- Interfaz: eliminado un segundo acceso duplicado a NEXUS en la navegación.
 - Prueba de aislamiento financiero: un usuario no puede crear una transacción usando la cuenta de otro usuario.
 - Documentación del contrato de integración con LIFE OS en `docs/INTEGRATION_LIFE_OS.md`: API, autenticación, límites de confianza, adapter server-side, privacidad y criterios de aceptación.
 
 ## Límites conocidos
 
-- **Persistencia:** el valor predeterminado es SQLite en `/tmp/grok_life_os.db`. En serverless es efímero y local a la instancia; no es persistencia duradera ni sincronización multi-dispositivo.
+- **Persistencia / despliegue Vercel:** sigue bloqueado hasta configurar y probar una base de datos duradera. El arranque en Vercel ahora falla de forma intencionada si detecta SQLite en `/tmp` o el secreto de desarrollo. No hay proveedor cloud contratado ni autorizado.
 - **Integración:** preparada a nivel documental, no conectada. No hay identidad federada, sincronización automática ni webhooks establecidos.
 - **Verificación funcional:** CI pasa, pero esto no sustituye pruebas E2E completas de registro, login, CRUD, backup y restauración en navegador/preview.
 - **Seguridad pendiente:** auditoría exhaustiva de IDOR y validación de entradas en todos los módulos; revisión de límites de login, CSP y política de retención de auditoría.
