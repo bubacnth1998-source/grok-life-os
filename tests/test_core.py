@@ -24,6 +24,15 @@ def test_pwa_manifest_and_service_worker_are_served():
     assert "caches.match(request)" in worker.text
 
 
+def test_security_headers_are_present():
+    response = client.get("/health")
+    assert response.headers["x-content-type-options"] == "nosniff"
+    assert response.headers["x-frame-options"] == "DENY"
+    assert "default-src 'self'" in response.headers["content-security-policy"]
+    assert "frame-ancestors 'none'" in response.headers["content-security-policy"]
+    assert response.headers["permissions-policy"] == "camera=(), geolocation=(), microphone=(self)"
+
+
 def test_health():
     assert client.get("/health").json()["status"] == "ok"
 
