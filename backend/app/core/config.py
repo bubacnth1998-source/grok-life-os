@@ -3,11 +3,12 @@ from functools import lru_cache
 from typing import Optional
 import os
 
-from pydantic import model_validator
+from pydantic import ConfigDict, model_validator
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
+    model_config = ConfigDict(env_file=".env", extra="ignore")
     APP_NAME: str = "Grok LIFE OS"
     APP_VERSION: str = "0.1.0"
     API_PREFIX: str = "/api/v1"
@@ -24,10 +25,6 @@ class Settings(BaseSettings):
     OPENAI_BASE_URL: str = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
     OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
     AI_PROVIDER: str = os.getenv("LIFE_OS_AI_PROVIDER", "auto")
-
-    class Config:
-        env_file = ".env"
-        extra = "ignore"
 
     @model_validator(mode="after")
     def validate_security_settings(self):
