@@ -24,7 +24,7 @@
 
 ## Límites conocidos
 
-- **Persistencia / despliegue Vercel:** sigue bloqueado hasta provisionar y probar un proyecto PostgreSQL independiente. Se ha comprobado una cotización Supabase de 0 USD/mes para crear un proyecto, pero todavía no se ha creado; la herramienta exige confirmar en qué organización debe crearse.
+- **Persistencia local:** el valor predeterminado ahora es `./data/grok_life_os.db` y `./data/media`, ambos fuera de Git y persistentes en el disco local. El backup export/import permite migrar y recuperar datos.\n- **Despliegue Vercel:** no se habilita sin PostgreSQL duradero. No se creará ningún proyecto cloud ni se asumirán costes sin autorización.
 - **Integración:** preparada a nivel documental, no conectada. No hay identidad federada, sincronización automática ni webhooks establecidos.
 - **Verificación funcional:** CI pasa, pero esto no sustituye pruebas E2E completas de registro, login, CRUD, backup y restauración en navegador/preview.
 - **Seguridad pendiente:** se añadieron pruebas de aislamiento entre usuarios para hábitos, memoria y calendario; su CI está pendiente. El rate limit de login actual es por proceso y no sustituye un limitador distribuido. Falta revisar CSP y política de retención de auditoría.
