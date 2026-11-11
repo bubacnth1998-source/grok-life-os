@@ -30,6 +30,8 @@ def delete_account(body: DeleteIn, db: Session = Depends(get_db), user: User = D
         raise HTTPException(400, "Password incorrect")
     log_event(db, user.id, "user", "irreversible", "privacy.delete_account", True)
     uid = user.id
+    # Flush the deletion event first so the subsequent bulk purge also removes it.
+    db.flush()
     # These audit tables intentionally keep nullable user references. Remove
     # account-linked rows explicitly so a future SQLite ID reuse cannot expose
     # the deleted account's audit history to another user.
