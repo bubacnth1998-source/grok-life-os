@@ -1,4 +1,5 @@
 const API = "/api/v1";
+const esc = (v) => String(v ?? "").replace(/[&<>\x22\x27]/g, ch => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "\x22":"&quot;", "\x27":"&#39;" })[ch]);
 let token = localStorage.getItem("glo_token") || "";
 async function api(path, opts = {}) {
   const headers = { "Content-Type": "application/json", ...(opts.headers || {}) };
@@ -48,49 +49,49 @@ async function loadDash() {
   const el = document.getElementById("view-dash");
   try {
     const d = await api("/core/dashboard");
-    el.innerHTML = `<h2 class="text-lg font-medium mb-2">LIFE CORE</h2><div class="grid gap-3 sm:grid-cols-2"><div class="rounded-xl border border-slate-800 p-4"><div class="text-slate-400 text-xs">Pendientes</div><div class="text-2xl">${d.answers.pending_count}</div></div><div class="rounded-xl border border-slate-800 p-4"><div class="text-slate-400 text-xs">Disponible</div><div class="text-2xl">${d.finance.personal.available} €</div></div></div><ul class="mt-4 text-sm">${(d.answers.next||[]).map(t=>`<li>• ${t.title}</li>`).join("")||"<li class='text-slate-500'>Nada prioritario</li>"}</ul>`;
-  } catch (e) { el.innerHTML = `<p class="text-red-400">${e.message}</p>`; }
+    el.innerHTML = `<h2 class="text-lg font-medium mb-2">LIFE CORE</h2><div class="grid gap-3 sm:grid-cols-2"><div class="rounded-xl border border-slate-800 p-4"><div class="text-slate-400 text-xs">Pendientes</div><div class="text-2xl">${esc(d.answers.pending_count)}</div></div><div class="rounded-xl border border-slate-800 p-4"><div class="text-slate-400 text-xs">Disponible</div><div class="text-2xl">${esc(d.finance.personal.available)} €</div></div></div><ul class="mt-4 text-sm">${(d.answers.next||[]).map(t=>`<li>• ${esc(t.title)}</li>`).join("")||"<li class='text-slate-500'>Nada prioritario</li>"}</ul>`;
+  } catch (e) { el.innerHTML = `<p class="text-red-400">${esc(e.message)}</p>`; }
 }
 async function loadFinance() {
   const el = document.getElementById("view-finance");
   try {
     const s = await api("/finance/summary?scope=personal");
     const accounts = await api("/finance/accounts");
-    el.innerHTML = `<h2 class="text-lg">Finance</h2><p class="text-sm text-slate-400">Disp ${s.available} · Res ${s.reserved}</p><ul class="mt-3">${accounts.map(a=>`<li class="border border-slate-800 rounded-lg px-3 py-2 flex justify-between"><span>${a.name}</span><span>${a.balance}</span></li>`).join("")||"<li class='text-slate-500'>Sin cuentas</li>"}</ul><button id="add-acc" class="mt-3 rounded-xl bg-slate-800 px-4 py-2 text-sm">+ Cuenta</button>`;
+    el.innerHTML = `<h2 class="text-lg">Finance</h2><p class="text-sm text-slate-400">Disp ${s.available} · Res ${s.reserved}</p><ul class="mt-3">${accounts.map(a=>`<li class="border border-slate-800 rounded-lg px-3 py-2 flex justify-between"><span>${esc(a.name)}</span><span>${esc(a.balance)}</span></li>`).join("")||"<li class='text-slate-500'>Sin cuentas</li>"}</ul><button id="add-acc" class="mt-3 rounded-xl bg-slate-800 px-4 py-2 text-sm">+ Cuenta</button>`;
     document.getElementById("add-acc").onclick = async () => { const name = prompt("Nombre"); if (!name) return; await api("/finance/accounts", { method: "POST", body: JSON.stringify({ name }) }); loadFinance(); };
-  } catch (e) { el.innerHTML = `<p class="text-red-400">${e.message}</p>`; }
+  } catch (e) { el.innerHTML = `<p class="text-red-400">${esc(e.message)}</p>`; }
 }
 async function loadProjects() {
   const el = document.getElementById("view-projects");
   try {
     const projects = await api("/projects"); const tasks = await api("/projects/tasks");
-    el.innerHTML = `<h2 class="text-lg">Projects</h2><button id="add-p" class="rounded-xl bg-slate-800 px-4 py-2 text-sm">+ Proyecto</button><button id="add-t" class="rounded-xl bg-slate-800 px-4 py-2 text-sm">+ Tarea</button><ul class="mt-3">${projects.map(p=>`<li>${p.name} · ${p.status}</li>`).join("")}</ul><ul class="mt-2">${tasks.map(t=>`<li>${t.title} (${t.status})</li>`).join("")}</ul>`;
+    el.innerHTML = `<h2 class="text-lg">Projects</h2><button id="add-p" class="rounded-xl bg-slate-800 px-4 py-2 text-sm">+ Proyecto</button><button id="add-t" class="rounded-xl bg-slate-800 px-4 py-2 text-sm">+ Tarea</button><ul class="mt-3">${projects.map(p=>`<li>${esc(p.name)} · ${esc(p.status)}</li>`).join("")}</ul><ul class="mt-2">${tasks.map(t=>`<li>${esc(t.title)} (${t.status})</li>`).join("")}</ul>`;
     document.getElementById("add-p").onclick = async () => { const name = prompt("Proyecto"); if (!name) return; await api("/projects", { method: "POST", body: JSON.stringify({ name }) }); loadProjects(); };
     document.getElementById("add-t").onclick = async () => { const title = prompt("Tarea"); if (!title) return; await api("/projects/tasks", { method: "POST", body: JSON.stringify({ title }) }); loadProjects(); };
-  } catch (e) { el.innerHTML = `<p class="text-red-400">${e.message}</p>`; }
+  } catch (e) { el.innerHTML = `<p class="text-red-400">${esc(e.message)}</p>`; }
 }
 async function loadTime() {
   const el = document.getElementById("view-time");
   try {
     const agenda = await api("/time/agenda/today");
-    el.innerHTML = `<h2 class="text-lg">Time · ${agenda.date}</h2><ul>${(agenda.events||[]).map(e=>`<li>${e.title}</li>`).join("")||"<li class='text-slate-500'>Sin eventos</li>"}</ul>`;
-  } catch (e) { el.innerHTML = `<p class="text-red-400">${e.message}</p>`; }
+    el.innerHTML = `<h2 class="text-lg">Time · ${esc(agenda.date)}</h2><ul>${(agenda.events||[]).map(e=>`<li>${esc(e.title)}</li>`).join("")||"<li class='text-slate-500'>Sin eventos</li>"}</ul>`;
+  } catch (e) { el.innerHTML = `<p class="text-red-400">${esc(e.message)}</p>`; }
 }
 async function loadLife() {
   const el = document.getElementById("view-life");
   try {
     const notes = await api("/life/notes");
-    el.innerHTML = `<h2 class="text-lg">Life domains</h2><button id="add-l" class="rounded-xl bg-slate-800 px-4 py-2 text-sm">+ Nota</button><ul class="mt-3">${notes.map(n=>`<li><span class="text-xs text-slate-500">${n.domain}</span> ${n.title}</li>`).join("")}</ul>`;
+    el.innerHTML = `<h2 class="text-lg">Life domains</h2><button id="add-l" class="rounded-xl bg-slate-800 px-4 py-2 text-sm">+ Nota</button><ul class="mt-3">${notes.map(n=>`<li><span class="text-xs text-slate-500">${esc(n.domain)}</span> ${esc(n.title)}</li>`).join("")}</ul>`;
     document.getElementById("add-l").onclick = async () => { const domain = prompt("Dominio", "housing"); const title = prompt("Título"); if (!domain||!title) return; await api("/life/notes", { method: "POST", body: JSON.stringify({ domain, title }) }); loadLife(); };
-  } catch (e) { el.innerHTML = `<p class="text-red-400">${e.message}</p>`; }
+  } catch (e) { el.innerHTML = `<p class="text-red-400">${esc(e.message)}</p>`; }
 }
 async function loadMemory() {
   const el = document.getElementById("view-memory");
   try {
     const items = await api("/memory");
-    el.innerHTML = `<h2 class="text-lg">Memory</h2><button id="add-m" class="rounded-xl bg-slate-800 px-4 py-2 text-sm">+ Item</button><ul class="mt-3">${items.map(m=>`<li>${m.kind}: ${m.title}</li>`).join("")}</ul>`;
+    el.innerHTML = `<h2 class="text-lg">Memory</h2><button id="add-m" class="rounded-xl bg-slate-800 px-4 py-2 text-sm">+ Item</button><ul class="mt-3">${items.map(m=>`<li>${esc(m.kind)}: ${esc(m.title)}</li>`).join("")}</ul>`;
     document.getElementById("add-m").onclick = async () => { const title = prompt("Título"); if (!title) return; await api("/memory", { method: "POST", body: JSON.stringify({ kind: "goal", title, confidence: "confirmed" }) }); loadMemory(); };
-  } catch (e) { el.innerHTML = `<p class="text-red-400">${e.message}</p>`; }
+  } catch (e) { el.innerHTML = `<p class="text-red-400">${esc(e.message)}</p>`; }
 }
 async function loadSim() {
   const el = document.getElementById("view-sim");
@@ -101,8 +102,8 @@ async function loadAudit() {
   const el = document.getElementById("view-audit");
   try {
     const r = await api("/audit/run");
-    el.innerHTML = `<h2 class="text-lg">Audit</h2><p class="text-sm">c ${r.summary.critical} w ${r.summary.warn} i ${r.summary.info}</p><ul class="text-sm mt-2">${(r.findings||[]).slice(0,20).map(f=>`<li><strong>${f.code}</strong> ${f.evidence}</li>`).join("")}</ul>`;
-  } catch (e) { el.innerHTML = `<p class="text-red-400">${e.message}</p>`; }
+    el.innerHTML = `<h2 class="text-lg">Audit</h2><p class="text-sm">c ${r.summary.critical} w ${r.summary.warn} i ${r.summary.info}</p><ul class="text-sm mt-2">${(r.findings||[]).slice(0,20).map(f=>`<li><strong>${esc(f.code)}</strong> ${esc(f.evidence)}</li>`).join("")}</ul>`;
+  } catch (e) { el.innerHTML = `<p class="text-red-400">${esc(e.message)}</p>`; }
 }
 async function loadNexus() {
   try { const st = await api("/nexus/status"); document.getElementById("nexus-status").textContent = `Modo: ${st.mode}`;} catch (_){}
@@ -112,8 +113,8 @@ document.getElementById("nexus-form").onsubmit = async (ev) => {
   const input = document.getElementById("nexus-input");
   const msg = input.value.trim(); if (!msg) return;
   const log = document.getElementById("nexus-log");
-  log.innerHTML += `<div class="text-slate-400">Tú: ${msg}</div>`; input.value = "";
-  try { const r = await api("/nexus/chat", { method: "POST", body: JSON.stringify({ message: msg }) }); log.innerHTML += `<div>NEXUS: ${r.reply}</div>`; }
-  catch (e) { log.innerHTML += `<div class="text-red-400">${e.message}</div>`; }
+  log.innerHTML += `<div class="text-slate-400">Tú: ${esc(msg)}</div>`; input.value = "";
+  try { const r = await api("/nexus/chat", { method: "POST", body: JSON.stringify({ message: msg }) }); log.innerHTML += `<div>NEXUS: ${esc(r.reply)}</div>`; }
+  catch (e) { log.innerHTML += `<div class="text-red-400">${esc(e.message)}</div>`; }
 };
 if (token) api("/auth/me").then(showApp).catch(() => localStorage.removeItem("glo_token"));
