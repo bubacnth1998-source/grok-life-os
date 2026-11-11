@@ -282,6 +282,47 @@ def test_backup_import_rolls_back_earlier_rows_after_late_invalid_row():
     assert client.get("/api/v1/finance/transactions", headers=target).json() == []
 
 
+def test_backup_rejects_transaction_account_scope_mismatch():
+    headers = _auth("backup-scope-mismatch@example.com")
+    response = client.post(
+        "/api/v1/backup/import",
+        headers=headers,
+        json={
+            "accounts": [{"id": 1, "name": "Business", "ledger_scope": "business"}],
+            "transactions": [{
+                "date": "2026-11-11",
+                "description": "Wrong scope",
+                "kind": "income",
+                "ledger_scope": "personal",
+                "postings": [{"account_id": 1, "amount": "10"}],
+            }],
+        },
+    )
+    assert response.status_code == 400
+    assert client.get("/api/v1/finance/accounts", headers=headers).json() == []
+    assert client.get("/api/v1/finance/transactions", headers=headers).json() == []
+
+
+def test_backup_rejects_non_finite_posting_amount():
+    headers = _auth("backup-nan-amount@example.com")
+    response = client.post(
+        "/api/v1/backup/import",
+        headers=headers,
+        json={
+            "accounts": [{"id": 1, "name": "Wallet"}],
+            "transactions": [{
+                "date": "2026-11-11",
+                "description": "NaN amount",
+                "kind": "income",
+                "ledger_scope": "personal",
+                "postings": [{"account_id": 1, "amount": "NaN"}],
+            }],
+        },
+    )
+    assert response.status_code == 400
+    assert client.get("/api/v1/finance/accounts", headers=headers).json() == []
+
+
 def test_finance_rejects_transaction_scope_mismatch():
     headers = _auth("finance-scope-owner@example.com")
     account = client.post(
