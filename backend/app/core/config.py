@@ -40,8 +40,8 @@ class Settings(BaseSettings):
             if len(self.SECRET_KEY) < 32 or self.SECRET_KEY == "grok-life-os-dev-secret-change-in-production-32c":
                 raise ValueError("Vercel requires a unique LIFE_OS_SECRET_KEY of at least 32 characters")
             normalized_db = self.DATABASE_URL.lower()
-            if normalized_db.startswith("sqlite:///") and "/tmp/" in normalized_db:
-                raise ValueError("Vercel cannot use SQLite in /tmp; configure durable external storage before accepting user data")
+            if normalized_db.startswith("sqlite:"):
+                raise ValueError("Vercel requires durable PostgreSQL storage; SQLite is not supported for persistent user data")
         return self
 
     @property
