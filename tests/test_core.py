@@ -161,7 +161,7 @@ def test_vercel_production_rejects_ephemeral_sqlite():
 def test_vercel_preview_also_rejects_ephemeral_database():
     import pytest
     from app.core.config import Settings
-    with pytest.raises(ValueError, match="Vercel cannot use SQLite in /tmp"):
+    with pytest.raises(ValueError, match="Vercel requires durable PostgreSQL storage"):
         Settings(
             ENVIRONMENT="development",
             VERCEL=True,
