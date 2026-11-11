@@ -1,43 +1,31 @@
 # STATUS
 
-**Estado de verificación:** suite actual aprobada: 9 tests en GitHub Actions (commit `35fb7f0`). La verificación funcional integral y de persistencia sigue pendiente.
+**Última verificación CI:** GitHub Actions aprobó la suite completa en el commit `ddd5337bd61e8fc2c95224b29e0dd02bc2521544` (run 42943373682, job `test`, conclusión `success`). También pasó el test corregido de configuración de secretos en `dc4f858`.
 
 ## Repositorio y despliegue
 
 - Repo: https://github.com/bubacnth1998-source/grok-life-os
 - Rama de trabajo: `fix/vercel-fastapi-entrypoint`
-- Preview: https://grok-life-48vx3i1g5-abubakari-conteh-kanteh.vercel.app/
+- Último cambio de integración: `6ebea978a2481b841ad4f4b5b18140541ccdd856` (documentación del contrato LIFE OS).
 - Producción: no modificada.
+- No se ha habilitado una conexión entre repositorios.
 
-## Verificado manualmente en preview anterior
+## Trabajo verificado en la rama
 
-- Página principal: HTTP 200
-- `/health`: HTTP 200
-- `/api/docs`: HTTP 200
-- `/api/v1/nexus/status`: HTTP 200
-- `/assets/app.js`: HTTP 200
+- Entry point FastAPI para Vercel e imports del backend.
+- Backup ampliado con finanzas y dominios de vida, checksum SHA-256, validación de colecciones e importación transaccional.
+- SQLite con claves foráneas activadas.
+- CORS cerrado por defecto y rechazo de wildcard.
+- Validación de configuración de producción: DEBUG desactivado y secreto único de al menos 32 caracteres.
+- Prueba de aislamiento financiero: un usuario no puede crear una transacción usando la cuenta de otro usuario.
+- Documentación del contrato de integración con LIFE OS en `docs/INTEGRATION_LIFE_OS.md`: API, autenticación, límites de confianza, adapter server-side, privacidad y criterios de aceptación.
 
-## Trabajo realizado en esta rama
+## Límites conocidos
 
-- Entry point FastAPI configurado para Vercel.
-- Imports del backend resueltos explícitamente.
-- Eliminada la reescritura global que desviaba todas las rutas a `/api`.
-- Backup ampliado para preservar finanzas, proyectos, hábitos, calendario, dominios personales, viajes, aprendizaje, multimedia y datos de negocio.
-- Pruebas de restauración cruzada entre cuentas con remapeo de identificadores.
-- SQLite con claves foráneas activadas para aplicar cascadas y restricciones.
-- CORS cerrado por defecto; no se habilitan orígenes externos sin configuración explícita.
-- Verificación SHA-256 del backup antes de importar.
-- Importación transaccional: ante un dato inválido se revierte la operación.
-- Añadidas pruebas de round-trip financiero y rechazo de backup manipulado.
-- Añadido workflow de GitHub Actions para ejecutar la suite.
+- **Persistencia:** el valor predeterminado es SQLite en `/tmp/grok_life_os.db`. En serverless es efímero y local a la instancia; no es persistencia duradera ni sincronización multi-dispositivo.
+- **Integración:** preparada a nivel documental, no conectada. No hay identidad federada, sincronización automática ni webhooks establecidos.
+- **Verificación funcional:** CI pasa, pero esto no sustituye pruebas E2E completas de registro, login, CRUD, backup y restauración en navegador/preview.
+- **Seguridad pendiente:** auditoría exhaustiva de IDOR y validación de entradas en todos los módulos; revisión de límites de login, CSP y política de retención de auditoría.
+- **Despliegue:** no se ha fusionado esta rama con `main` ni se ha publicado producción.
 
-## Límites conocidos / siguientes prioridades
-
-- Mantener CI en verde y ampliar cobertura de seguridad y frontend.
-- Probar registro, login, creación de datos, exportación e importación de extremo a extremo.
-- Revisar persistencia: SQLite en almacenamiento temporal de un despliegue serverless no debe tratarse como base de datos permanente.
-- Ampliar la cobertura de backup a los demás módulos y añadir restauración de calendarios, hábitos y datos de negocio.
-- Revisar seguridad de configuración antes de cualquier despliegue de producción.
-- Sincronización multi-dispositivo continua no está implementada; export/import es el mecanismo disponible.
-
-No se declara el producto terminado ni se fusiona esta rama con `main` hasta superar las pruebas funcionales y de seguridad.
+No declarar el producto terminado hasta verificar persistencia durable, aislamiento por usuario en todos los módulos y pruebas E2E completas.
