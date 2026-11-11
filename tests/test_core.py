@@ -148,13 +148,25 @@ def test_security_settings_reject_debug_in_production():
 def test_vercel_production_rejects_ephemeral_sqlite():
     import pytest
     from app.core.config import Settings
-    with pytest.raises(ValueError, match="Vercel production cannot use SQLite in /tmp"):
+    with pytest.raises(ValueError, match="Vercel cannot use SQLite in /tmp"):
         Settings(
             ENVIRONMENT="production",
             VERCEL=True,
             DATABASE_URL="sqlite:////tmp/grok_life_os.db",
             DEBUG=False,
             SECRET_KEY="unique-production-secret-key-long-enough-123",
+        )
+
+
+def test_vercel_preview_also_rejects_ephemeral_database():
+    import pytest
+    from app.core.config import Settings
+    with pytest.raises(ValueError, match="Vercel cannot use SQLite in /tmp"):
+        Settings(
+            ENVIRONMENT="development",
+            VERCEL=True,
+            DATABASE_URL="sqlite:////tmp/grok_life_os.db",
+            SECRET_KEY="unique-preview-secret-key-long-enough-123456",
         )
 
 
