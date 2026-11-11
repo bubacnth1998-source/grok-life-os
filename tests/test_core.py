@@ -230,3 +230,26 @@ def test_backup_import_rolls_back_earlier_rows_after_late_invalid_row():
     assert response.status_code == 400
     assert client.get("/api/v1/finance/accounts", headers=target).json() == []
     assert client.get("/api/v1/finance/transactions", headers=target).json() == []
+
+
+def test_finance_rejects_transaction_scope_mismatch():
+    headers = _auth("finance-scope-owner@example.com")
+    account = client.post(
+        "/api/v1/finance/accounts",
+        headers=headers,
+        json={"name": "Personal account", "ledger_scope": "personal"},
+    ).json()["id"]
+    rejected = client.post(
+        "/api/v1/finance/transactions",
+        headers=headers,
+        json={
+            "account_id": account,
+            "amount": 10,
+            "kind": "income",
+            "description": "Wrong ledger",
+            "ledger_scope": "business",
+        },
+    )
+    assert rejected.status_code == 400
+    assert client.get("/api/v1/finance/transactions", headers=headers).json() == []
+    assert client.get("/api/v1/finance/summary?scope=personal", headers=headers).json()["available"] == 0
