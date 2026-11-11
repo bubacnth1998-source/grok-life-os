@@ -26,8 +26,8 @@ def list_rules(db: Session = Depends(get_db), user: User = Depends(get_current_u
 
 @router.post("/rules", status_code=201)
 def create_rule(body: RuleIn, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    if body.trigger_type not in ("manual", "schedule_daily"):
-        raise HTTPException(400, "invalid trigger_type")
+    if body.trigger_type != "manual":
+        raise HTTPException(400, "Only manual triggers are supported; scheduling requires a configured scheduler")
     if body.action_type not in ("create_task", "memory_note"):
         raise HTTPException(400, "invalid action_type")
     r = AutomationRule(user_id=user.id, name=body.name.strip(), trigger_type=body.trigger_type, action_type=body.action_type, action_payload=json.dumps(body.action_payload, ensure_ascii=False))
@@ -38,7 +38,7 @@ def create_rule(body: RuleIn, db: Session = Depends(get_db), user: User = Depend
     return {"id": r.id, "name": r.name}
 
 @router.post("/rules/{rule_id}/run")
-def run_rule(rule_id: int, confirmed: bool = True, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def run_rule(rule_id: int, confirmed: bool = False, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     r = db.get(AutomationRule, rule_id)
     if not r or r.user_id != user.id:
         raise HTTPException(404, "Rule not found")
