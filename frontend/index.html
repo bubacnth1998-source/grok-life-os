@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Grok LIFE OS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>body{touch-action:manipulation}button,input,select{min-height:44px;font-size:16px}</style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+  <div id="auth" class="max-w-md mx-auto p-6 mt-12">
+    <h1 class="text-2xl font-semibold mb-2">Grok LIFE OS</h1>
+    <p class="text-slate-400 text-sm mb-6">Sistema operativo personal · local-first</p>
+    <div class="space-y-3">
+      <input id="email" type="email" placeholder="Email" class="w-full rounded-xl bg-slate-900 border border-slate-700 px-4 py-3" />
+      <input id="password" type="password" placeholder="Contraseña (≥8)" class="w-full rounded-xl bg-slate-900 border border-slate-700 px-4 py-3" />
+      <input id="name" type="text" placeholder="Nombre (solo registro)" class="w-full rounded-xl bg-slate-900 border border-slate-700 px-4 py-3" />
+      <button id="btn-login" class="w-full rounded-xl bg-blue-600 py-3 font-medium">Entrar</button>
+      <button id="btn-register" class="w-full rounded-xl bg-slate-800 py-3">Crear cuenta</button>
+      <p id="auth-err" class="text-red-400 text-sm"></p>
+    </div>
+  </div>
+  <div id="app" class="hidden">
+    <header class="border-b border-slate-800 px-4 py-3 flex justify-between sticky top-0 bg-slate-950/90 backdrop-blur z-10">
+      <div><div class="font-semibold">Grok LIFE OS</div><div id="user-label" class="text-xs text-slate-400"></div></div>
+      <button id="btn-logout" class="text-sm text-slate-400">Salir</button>
+    </header>
+    <nav class="flex gap-1 overflow-x-auto border-b border-slate-800 px-2 py-2 text-sm">
+      <button data-view="dash" class="nav px-3 py-2 rounded-lg bg-slate-800">Core</button>
+      <button data-view="finance" class="nav px-3 py-2 rounded-lg">Finance</button>
+      <button data-view="projects" class="nav px-3 py-2 rounded-lg">Projects</button>
+      <button data-view="time" class="nav px-3 py-2 rounded-lg">Time</button>
+      <button data-view="life" class="nav px-3 py-2 rounded-lg">Life</button>
+      <button data-view="memory" class="nav px-3 py-2 rounded-lg">Memory</button>
+      <button data-view="sim" class="nav px-3 py-2 rounded-lg">Sim</button>
+      <button data-view="audit" class="nav px-3 py-2 rounded-lg">Audit</button>
+      <button data-view="nexus" class="nav px-3 py-2 rounded-lg">Nexus</button>
+    </nav>
+    <main class="p-4 max-w-3xl mx-auto space-y-4">
+      <section id="view-dash"></section>
+      <section id="view-finance" class="hidden"></section>
+      <section id="view-projects" class="hidden"></section>
+      <section id="view-time" class="hidden"></section>
+      <section id="view-life" class="hidden"></section>
+      <section id="view-memory" class="hidden"></section>
+      <section id="view-sim" class="hidden"></section>
+      <section id="view-audit" class="hidden"></section>
+      <section id="view-nexus" class="hidden">
+        <div id="nexus-status" class="text-sm text-slate-400"></div>
+        <div id="nexus-log" class="space-y-2 text-sm"></div>
+        <form id="nexus-form" class="flex gap-2 items-center mt-2">
+          <input id="nexus-input" class="flex-1 rounded-xl bg-slate-900 border border-slate-700 px-3" placeholder="Pregunta a NEXUS…" />
+          <button type="button" id="btn-voice" class="rounded-xl bg-slate-800 px-3">🎙</button>
+          <button class="rounded-xl bg-blue-600 px-4">Enviar</button>
+        </form>
+      </section>
+    </main>
+  </div>
+  <script src="/assets/app.js"></script>
+</body>
+</html>
