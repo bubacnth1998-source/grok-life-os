@@ -119,3 +119,37 @@ def test_delete_account_removes_user_financial_records():
     response = client.post("/api/v1/privacy/delete-account", headers=headers, json={"password": "password12", "confirm": "DELETE"})
     assert response.status_code == 200, response.text
     assert response.json()["ok"] is True
+
+
+def test_security_settings_default_debug_is_disabled():
+    from app.core.config import Settings
+    settings = Settings(SECRET_KEY="unit-test-secret-key-that-is-long-enough")
+    assert settings.DEBUG is False
+
+
+def test_security_settings_reject_production_default_secret():
+    import pytest
+    from app.core.config import Settings
+    with pytest.raises(ValueError, match="unique LIFE_OS_SECRET_KEY"):
+        Settings(ENVIRONMENT="production", DEBUG=False)
+
+
+def test_security_settings_reject_debug_in_production():
+    import pytest
+    from app.core.config import Settings
+    with pytest.raises(ValueError, match="DEBUG must be false"):
+        Settings(
+            ENVIRONMENT="production",
+            DEBUG=True,
+            SECRET_KEY="a-unique-production-secret-key-long-enough",
+        )
+
+
+def test_security_settings_reject_wildcard_cors():
+    import pytest
+    from app.core.config import Settings
+    with pytest.raises(ValueError, match="Wildcard CORS"):
+        Settings(
+            CORS_ORIGINS="*",
+            SECRET_KEY="unit-test-secret-key-that-is-long-enough",
+        )
