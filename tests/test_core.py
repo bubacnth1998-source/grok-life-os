@@ -131,7 +131,7 @@ def test_security_settings_reject_production_default_secret():
     import pytest
     from app.core.config import Settings
     with pytest.raises(ValueError, match="unique LIFE_OS_SECRET_KEY"):
-        Settings(ENVIRONMENT="production", DEBUG=False)
+        Settings(ENVIRONMENT="production", DEBUG=False, SECRET_KEY="grok-life-os-dev-secret-change-in-production-32c")
 
 
 def test_security_settings_reject_debug_in_production():
