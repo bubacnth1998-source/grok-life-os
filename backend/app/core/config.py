@@ -1,9 +1,8 @@
 """Grok LIFE OS — settings from environment only."""
 from functools import lru_cache
 from typing import Optional
-import os
 
-from pydantic import ConfigDict, model_validator
+from pydantic import ConfigDict, Field, model_validator
 from pydantic_settings import BaseSettings
 
 
@@ -12,19 +11,19 @@ class Settings(BaseSettings):
     APP_NAME: str = "Grok LIFE OS"
     APP_VERSION: str = "0.1.0"
     API_PREFIX: str = "/api/v1"
-    DEBUG: bool = os.getenv("LIFE_OS_DEBUG", "false").lower() in ("1", "true", "yes")
-    ENVIRONMENT: str = os.getenv("LIFE_OS_ENV", "development")
-    SECRET_KEY: str = os.getenv("LIFE_OS_SECRET_KEY", "grok-life-os-dev-secret-change-in-production-32c")
+    DEBUG: bool = Field(default=False, validation_alias="LIFE_OS_DEBUG")
+    ENVIRONMENT: str = Field(default="development", validation_alias="LIFE_OS_ENV")
+    SECRET_KEY: str = Field(default="grok-life-os-dev-secret-change-in-production-32c", validation_alias="LIFE_OS_SECRET_KEY")
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("LIFE_OS_TOKEN_EXPIRE_MINUTES", str(60 * 24 * 7)))
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./data/grok_life_os.db")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=60 * 24 * 7, validation_alias="LIFE_OS_TOKEN_EXPIRE_MINUTES")
+    DATABASE_URL: str = "sqlite:///./data/grok_life_os.db"
     VERCEL: bool = False
-    CORS_ORIGINS: str = os.getenv("LIFE_OS_CORS_ORIGINS", "")
-    MEDIA_PATH: str = os.getenv("LIFE_OS_MEDIA_PATH", "./data/media")
+    CORS_ORIGINS: str = Field(default="", validation_alias="LIFE_OS_CORS_ORIGINS")
+    MEDIA_PATH: str = Field(default="./data/media", validation_alias="LIFE_OS_MEDIA_PATH")
     OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY")
     OPENAI_BASE_URL: str = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
     OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
-    AI_PROVIDER: str = os.getenv("LIFE_OS_AI_PROVIDER", "auto")
+    AI_PROVIDER: str = Field(default="auto", validation_alias="LIFE_OS_AI_PROVIDER")
 
     @model_validator(mode="after")
     def validate_security_settings(self):
