@@ -11,6 +11,19 @@ Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
 client = TestClient(app)
 
+def test_pwa_manifest_and_service_worker_are_served():
+    manifest = client.get("/manifest.webmanifest")
+    assert manifest.status_code == 200
+    assert manifest.json()["name"] == "Grok LIFE OS"
+    assert manifest.json()["start_url"] == "/"
+
+    worker = client.get("/sw.js")
+    assert worker.status_code == 200
+    assert worker.headers.get("service-worker-allowed") == "/"
+    assert 'url.pathname.startsWith("/api/")' in worker.text
+    assert "caches.match(request)" in worker.text
+
+
 def test_health():
     assert client.get("/health").json()["status"] == "ok"
 
