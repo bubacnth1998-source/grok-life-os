@@ -171,3 +171,13 @@ async function loadWorkspace() {
     host.innerHTML = '<p class="text-red-400">No se pudieron cargar todos los módulos: '+esc(e.message)+'</p><p class="text-xs text-slate-500 mt-2">Comprueba que las migraciones y rutas de la API estén disponibles.</p>';
   }
 }
+
+
+// Installable shell only: the service worker deliberately never caches /api/ responses.
+if ("serviceWorker" in navigator && window.isSecureContext) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch((error) => {
+      console.warn("Grok LIFE OS: service worker registration failed", error);
+    });
+  }, { once: true });
+}
