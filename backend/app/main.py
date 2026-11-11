@@ -64,3 +64,15 @@ if FRONTEND.exists():
     @app.get("/")
     def index():
         return FileResponse(FRONTEND / "index.html")
+
+    @app.get("/manifest.webmanifest")
+    def web_manifest():
+        return FileResponse(FRONTEND / "manifest.webmanifest", media_type="application/manifest+json")
+
+    @app.get("/sw.js")
+    def service_worker():
+        return FileResponse(
+            FRONTEND / "sw.js",
+            media_type="application/javascript",
+            headers={"Service-Worker-Allowed": "/"},
+        )
