@@ -105,3 +105,17 @@ def test_backup_round_trip_restores_life_domains():
     assert len(client.get("/api/v1/learning/courses", headers=target).json()) == 1
     assert len(client.get("/api/v1/media/items", headers=target).json()) == 1
     assert len(client.get("/api/v1/business/clients", headers=target).json()) == 1
+
+def test_sqlite_foreign_keys_enabled():
+    from sqlalchemy import text
+    with engine.connect() as connection:
+        assert connection.execute(text("PRAGMA foreign_keys")).scalar() == 1
+
+def test_delete_account_removes_user_financial_records():
+    headers = _auth("privacy-delete@example.com")
+    account = client.post("/api/v1/finance/accounts", headers=headers, json={"name": "Wallet"}).json()["id"]
+    created = client.post("/api/v1/finance/transactions", headers=headers, json={"account_id": account, "amount": 25, "kind": "income", "description": "Test"})
+    assert created.status_code == 201
+    response = client.post("/api/v1/privacy/delete-account", headers=headers, json={"password": "password12", "confirm": "DELETE"})
+    assert response.status_code == 200, response.text
+    assert response.json()["ok"] is True
