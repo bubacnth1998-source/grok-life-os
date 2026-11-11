@@ -118,3 +118,27 @@ document.getElementById("nexus-form").onsubmit = async (ev) => {
   catch (e) { log.innerHTML += `<div class="text-red-400">${esc(e.message)}</div>`; }
 };
 if (token) api("/auth/me").then(showApp).catch(() => localStorage.removeItem("glo_token"));
+
+const voiceButton = document.getElementById("btn-voice");
+if (voiceButton) {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    voiceButton.title = "El navegador no admite dictado por voz";
+    voiceButton.onclick = () => { document.getElementById("nexus-status").textContent = "El dictado por voz no está disponible en este navegador."; };
+  } else {
+    const recognition = new SpeechRecognition();
+    recognition.lang = "es-ES";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onstart = () => { voiceButton.textContent = "Escuchando…"; voiceButton.disabled = true; };
+    recognition.onend = () => { voiceButton.textContent = "🎙"; voiceButton.disabled = false; };
+    recognition.onerror = (event) => { document.getElementById("nexus-status").textContent = "Dictado: " + event.error; };
+    recognition.onresult = (event) => {
+      const transcript = event.results?.[0]?.[0]?.transcript || "";
+      const input = document.getElementById("nexus-input");
+      input.value = [input.value, transcript].filter(Boolean).join(" ").trim();
+      input.focus();
+    };
+    voiceButton.onclick = () => { try { recognition.start(); } catch (_) {} };
+  }
+}
