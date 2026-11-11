@@ -183,7 +183,7 @@ async function loadWorkspace() {
       <section class="rounded-xl border border-slate-800 p-3"><div class="flex justify-between items-center"><h3 class="font-medium">Viajes</h3><button id="ws-trip" class="rounded-lg bg-slate-800 px-3 py-2">+ Viaje</button></div><ul class="mt-2">${trips.map(x=>`<li>${esc(x.title)} · ${esc(x.destination || "Destino pendiente")} · ${esc(x.status)}</li>`).join("") || "<li class='text-slate-500'>Sin viajes</li>"}</ul></section>
       <section class="rounded-xl border border-slate-800 p-3"><div class="flex justify-between items-center"><h3 class="font-medium">Aprendizaje</h3><button id="ws-course" class="rounded-lg bg-slate-800 px-3 py-2">+ Curso</button></div><ul class="mt-2">${courses.map(x=>`<li>${esc(x.title)} · ${esc(x.progress)}%</li>`).join("") || "<li class='text-slate-500'>Sin cursos</li>"}</ul></section>
       <section class="rounded-xl border border-slate-800 p-3"><div class="flex justify-between items-center"><h3 class="font-medium">Biblioteca multimedia</h3><button id="ws-media" class="rounded-lg bg-slate-800 px-3 py-2">+ Recurso</button></div><ul class="mt-2">${media.map(x=>`<li>${esc(x.title)} · ${esc(x.media_type)}</li>`).join("") || "<li class='text-slate-500'>Sin recursos</li>"}</ul></section>
-      <section class="rounded-xl border border-slate-800 p-3"><div class="flex justify-between items-center"><h3 class="font-medium">Negocio</h3><button id="ws-client" class="rounded-lg bg-slate-800 px-3 py-2">+ Cliente</button></div><p class="text-sm text-slate-400 mt-1">${clients.length} clientes · ${invoices.length} facturas</p><ul class="mt-2">${clients.map(x=>`<li>${esc(x.name)} · ${esc(x.email || "Sin email")}</li>`).join("") || "<li class='text-slate-500'>Sin clientes</li>"}</ul></section>
+      <section class="rounded-xl border border-slate-800 p-3"><div class="flex justify-between items-center"><h3 class="font-medium">Negocio</h3><div class="flex gap-2"><button id="ws-client" class="rounded-lg bg-slate-800 px-3 py-2">+ Cliente</button><button id="ws-invoice" class="rounded-lg bg-slate-800 px-3 py-2">+ Factura</button></div></div><p class="text-sm text-slate-400 mt-1">${clients.length} clientes · ${invoices.length} facturas</p><ul class="mt-2">${clients.map(x=>`<li>${esc(x.name)} · ${esc(x.email || "Sin email")}</li>`).join("") || "<li class='text-slate-500'>Sin clientes</li>"}</ul><h4 class="font-medium mt-3">Facturas</h4><ul class="mt-2 space-y-2">${invoices.map(x=>`<li class="flex items-center justify-between gap-2 border-t border-slate-800 pt-2"><span>${esc(x.number)} · ${esc(x.amount)} € · ${esc(x.status)}</span><button data-invoice-status="${Number(x.id)}" class="rounded-lg bg-slate-800 px-2 py-1 text-xs">Estado</button></li>`).join("") || "<li class='text-slate-500'>Sin facturas</li>"}</ul></section>
       <section class="rounded-xl border border-slate-800 p-3"><h3 class="font-medium">Automatizaciones</h3><ul class="mt-2">${rules.map(x=>`<li>${esc(x.name)} · ${esc(x.trigger_type)} · ${x.is_active ? "Activa" : "Pausada"}</li>`).join("") || "<li class='text-slate-500'>Sin reglas</li>"}</ul><p class="text-xs text-slate-500 mt-2">Las reglas actuales solo se ejecutan manualmente o bajo confirmación; no hay scheduler en segundo plano.</p></section>
       <section class="rounded-xl border border-slate-800 p-3"><h3 class="font-medium">Inteligencia</h3><ul class="mt-2">${intelligence.facts.map(x=>`<li>${esc(x.text)}</li>`).join("")}</ul><p class="text-xs text-slate-500 mt-2">${esc(intelligence.disclaimer)}</p></section>`;
     document.getElementById("ws-export").onclick = async () => {
@@ -228,6 +228,24 @@ async function loadWorkspace() {
     document.getElementById("ws-course").onclick = async () => { const title=prompt("Nombre del curso"); if(title?.trim()){await api("/learning/courses",{method:"POST",body:JSON.stringify({title})});loadWorkspace();} };
     document.getElementById("ws-media").onclick = async () => { const title=prompt("Nombre del recurso"); if(!title?.trim())return; const url_or_path=prompt("URL o ruta (opcional)")||null; await api("/media/items",{method:"POST",body:JSON.stringify({title,media_type:"other",url_or_path})});loadWorkspace(); };
     document.getElementById("ws-client").onclick = async () => { const name=prompt("Nombre del cliente"); if(name?.trim()){await api("/business/clients",{method:"POST",body:JSON.stringify({name})});loadWorkspace();} };
+    document.getElementById("ws-invoice").onclick = async () => {
+      const number = prompt("Número de factura");
+      if (!number?.trim()) return;
+      const amount = Number(prompt("Importe de la factura (EUR)"));
+      if (!Number.isFinite(amount) || amount <= 0) return;
+      const clientList = clients.map(x => x.id + " — " + x.name).join("\n");
+      const clientInput = prompt("ID del cliente (opcional):\n" + clientList, "");
+      const client_id = clientInput?.trim() ? Number(clientInput) : null;
+      if (client_id !== null && !clients.some(x => x.id === client_id)) return;
+      await api("/business/invoices", { method: "POST", body: JSON.stringify({ number: number.trim(), amount, client_id, status: "draft" }) });
+      loadWorkspace();
+    };
+    host.querySelectorAll("[data-invoice-status]").forEach(btn => btn.onclick = async () => {
+      const status = prompt("Nuevo estado: draft, sent, paid o cancelled", "sent");
+      if (!["draft", "sent", "paid", "cancelled"].includes(status)) return;
+      await api("/business/invoices/" + btn.dataset.invoiceStatus + "?status=" + encodeURIComponent(status), { method: "PATCH" });
+      loadWorkspace();
+    });
     host.querySelectorAll("[data-habit-log]").forEach(btn=>btn.onclick=async()=>{await api("/habits/"+btn.dataset.habitLog+"/log",{method:"POST"});loadWorkspace();});
   } catch (e) {
     host.innerHTML = '<p class="text-red-400">No se pudieron cargar todos los módulos: '+esc(e.message)+'</p><p class="text-xs text-slate-500 mt-2">Comprueba que las migraciones y rutas de la API estén disponibles.</p>';
