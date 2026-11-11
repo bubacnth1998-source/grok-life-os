@@ -27,6 +27,10 @@ def record_simple(db, user_id, account_id, amount, kind, description, category, 
     acc = db.get(Account, account_id)
     if not acc or acc.user_id != user_id:
         raise ValueError("Account not found")
+    if scope not in ("personal", "business"):
+        raise ValueError("scope must be personal or business")
+    if acc.ledger_scope != scope:
+        raise ValueError("Transaction scope must match the account ledger_scope")
     signed = -abs(amount) if kind == "expense" else abs(amount)
     if kind not in ("income", "expense"):
         raise ValueError("kind must be income or expense")
