@@ -181,3 +181,52 @@ def test_finance_rejects_cross_user_account_reference():
         headers=owner_headers,
     ).json()
     assert owner_summary["available"] == 0
+
+
+def test_backup_rejects_transaction_reference_to_account_not_in_backup():
+    owner = _auth("backup-reference-owner@example.com")
+    foreign_account = client.post(
+        "/api/v1/finance/accounts",
+        headers=owner,
+        json={"name": "Foreign private account"},
+    ).json()["id"]
+
+    target = _auth("backup-reference-target@example.com")
+    response = client.post(
+        "/api/v1/backup/import",
+        headers=target,
+        json={
+            "accounts": [{"id": 10, "name": "Imported account"}],
+            "transactions": [{
+                "date": "2026-11-11",
+                "description": "Cross-account reference attempt",
+                "kind": "income",
+                "ledger_scope": "personal",
+                "postings": [{"account_id": foreign_account, "amount": "50"}],
+            }],
+        },
+    )
+    assert response.status_code == 400
+    assert client.get("/api/v1/finance/accounts", headers=target).json() == []
+    assert client.get("/api/v1/finance/transactions", headers=target).json() == []
+
+
+def test_backup_import_rolls_back_earlier_rows_after_late_invalid_row():
+    target = _auth("backup-rollback-target@example.com")
+    response = client.post(
+        "/api/v1/backup/import",
+        headers=target,
+        json={
+            "accounts": [{"id": 1, "name": "Should roll back"}],
+            "transactions": [{
+                "date": "2026-11-11",
+                "description": "Invalid account mapping",
+                "kind": "income",
+                "ledger_scope": "personal",
+                "postings": [{"account_id": 999999, "amount": "25"}],
+            }],
+        },
+    )
+    assert response.status_code == 400
+    assert client.get("/api/v1/finance/accounts", headers=target).json() == []
+    assert client.get("/api/v1/finance/transactions", headers=target).json() == []
