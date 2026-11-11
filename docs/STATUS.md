@@ -1,6 +1,6 @@
 # STATUS
 
-**Estado de verificación:** en progreso. No se declara la suite aprobada hasta que GitHub Actions confirme el resultado.
+**Estado de verificación:** suite actual aprobada: 9 tests en GitHub Actions (commit `35fb7f0`). La verificación funcional integral y de persistencia sigue pendiente.
 
 ## Repositorio y despliegue
 
@@ -22,7 +22,10 @@
 - Entry point FastAPI configurado para Vercel.
 - Imports del backend resueltos explícitamente.
 - Eliminada la reescritura global que desviaba todas las rutas a `/api`.
-- Backup ampliado para preservar cuentas, transacciones y apuntes contables.
+- Backup ampliado para preservar finanzas, proyectos, hábitos, calendario, dominios personales, viajes, aprendizaje, multimedia y datos de negocio.
+- Pruebas de restauración cruzada entre cuentas con remapeo de identificadores.
+- SQLite con claves foráneas activadas para aplicar cascadas y restricciones.
+- CORS cerrado por defecto; no se habilitan orígenes externos sin configuración explícita.
 - Verificación SHA-256 del backup antes de importar.
 - Importación transaccional: ante un dato inválido se revierte la operación.
 - Añadidas pruebas de round-trip financiero y rechazo de backup manipulado.
@@ -30,7 +33,7 @@
 
 ## Límites conocidos / siguientes prioridades
 
-- Confirmar ejecución de GitHub Actions y corregir cualquier fallo.
+- Mantener CI en verde y ampliar cobertura de seguridad y frontend.
 - Probar registro, login, creación de datos, exportación e importación de extremo a extremo.
 - Revisar persistencia: SQLite en almacenamiento temporal de un despliegue serverless no debe tratarse como base de datos permanente.
 - Ampliar la cobertura de backup a los demás módulos y añadir restauración de calendarios, hábitos y datos de negocio.
