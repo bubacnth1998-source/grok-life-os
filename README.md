@@ -1,18 +1,21 @@
 # Grok LIFE OS
 
-Implementación independiente de Grok (xAI). Repo: `grok-life-os`.
+Implementación independiente de Grok (xAI). Repositorio: `grok-life-os`.
 
-## Estado
+## Estado verificado
 
-- **Tests:** 15 passed (`pytest tests/test_core.py`)
-- **Stack:** FastAPI + SQLite + PWA local-first
-- **Sin Vercel/hosting externo** — ejecuta en Chromebook Linux
+- **Pruebas definidas:** 6 funciones en `tests/test_core.py`; el resultado de CI está pendiente de confirmación.
+- **Stack:** FastAPI + SQLAlchemy + SQLite + frontend web adaptable.
+- **Ejecución principal:** local en Linux/Chromebook, sin servicios de pago obligatorios.
+- **Preview Vercel:** disponible para validar la interfaz y las rutas HTTP. No equivale a producción ni garantiza persistencia duradera en un filesystem efímero.
 
-## Arranque
+## Arranque local
 
 ```bash
 git clone https://github.com/bubacnth1998-source/grok-life-os.git
 cd grok-life-os
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 export PYTHONPATH="${PWD}/backend"
 chmod +x scripts/start.sh
@@ -23,9 +26,17 @@ Abre http://127.0.0.1:8000
 
 ## Módulos API
 
-Auth, Core, Finance (ledger), Projects, Memory, Backup, Nexus, Governance, Simulator, Audit, Time, Life domains, Automation, Habits, Business, Travel, Learning, Media, Intelligence, Privacy
+Auth, Core, Finance (ledger), Projects, Memory, Backup, Nexus, Governance, Simulator, Audit, Time, Life domains, Automation, Habits, Business, Travel, Learning, Media, Intelligence, Privacy.
 
-## Docs
+## Recuperación de datos
+
+La exportación incluye cuentas, movimientos y apuntes contables. La importación restaura las cuentas y reconstruye las referencias de movimientos; los archivos con checksum SHA-256 se verifican antes de escribir. Importar crea registros nuevos y no sobrescribe los existentes.
+
+## CI
+
+GitHub Actions ejecuta `pytest -q` en pushes y pull requests para las ramas `main` y `fix/**`.
+
+## Documentación
 
 - docs/ARCHITECTURE.md
 - docs/STATUS.md
