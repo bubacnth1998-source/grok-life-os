@@ -39,9 +39,12 @@ class Settings(BaseSettings):
                 raise ValueError("DEBUG must be false in production")
             if len(self.SECRET_KEY) < 32 or self.SECRET_KEY == "grok-life-os-dev-secret-change-in-production-32c":
                 raise ValueError("Production requires a unique LIFE_OS_SECRET_KEY of at least 32 characters")
-            normalized_db = self.DATABASE_URL.lower().replace("\\\\", "/")
-            if self.VERCEL and normalized_db.startswith("sqlite:///") and "/tmp/" in normalized_db:
-                raise ValueError("Vercel production cannot use SQLite in /tmp; configure durable external storage before accepting user data")
+        if self.VERCEL:
+            if len(self.SECRET_KEY) < 32 or self.SECRET_KEY == "grok-life-os-dev-secret-change-in-production-32c":
+                raise ValueError("Vercel requires a unique LIFE_OS_SECRET_KEY of at least 32 characters")
+            normalized_db = self.DATABASE_URL.lower()
+            if normalized_db.startswith("sqlite:///") and "/tmp/" in normalized_db:
+                raise ValueError("Vercel cannot use SQLite in /tmp; configure durable external storage before accepting user data")
         return self
 
     @property
