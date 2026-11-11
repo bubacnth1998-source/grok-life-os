@@ -253,3 +253,51 @@ def test_finance_rejects_transaction_scope_mismatch():
     assert rejected.status_code == 400
     assert client.get("/api/v1/finance/transactions", headers=headers).json() == []
     assert client.get("/api/v1/finance/summary?scope=personal", headers=headers).json()["available"] == 0
+
+
+def test_automation_requires_explicit_confirmation_before_mutation():
+    headers = _auth("automation-confirmation@example.com")
+    created = client.post(
+        "/api/v1/automation/rules",
+        headers=headers,
+        json={
+            "name": "Create follow-up",
+            "trigger_type": "manual",
+            "action_type": "create_task",
+            "action_payload": {"title": "Confirm me"},
+        },
+    )
+    assert created.status_code == 201
+    rule_id = created.json()["id"]
+
+    denied = client.post(f"/api/v1/automation/rules/{rule_id}/run", headers=headers)
+    assert denied.status_code == 403
+    assert client.get("/api/v1/projects/tasks", headers=headers).json() == []
+    runs = client.get("/api/v1/automation/runs", headers=headers).json()
+    assert len(runs) == 1
+    assert runs[0]["status"] == "skipped"
+
+    allowed = client.post(
+        f"/api/v1/automation/rules/{rule_id}/run",
+        headers=headers,
+        params={"confirmed": "true"},
+    )
+    assert allowed.status_code == 200
+    tasks = client.get("/api/v1/projects/tasks", headers=headers).json()
+    assert len(tasks) == 1
+    assert tasks[0]["title"] == "Confirm me"
+
+
+def test_automation_rejects_schedule_trigger_without_scheduler():
+    headers = _auth("automation-no-scheduler@example.com")
+    response = client.post(
+        "/api/v1/automation/rules",
+        headers=headers,
+        json={
+            "name": "Pretend schedule",
+            "trigger_type": "schedule_daily",
+            "action_type": "create_task",
+            "action_payload": {"title": "Should not be scheduled"},
+        },
+    )
+    assert response.status_code == 400
