@@ -188,6 +188,33 @@ def test_local_settings_default_to_project_data_directory(monkeypatch):
     assert settings.DEBUG is False
 
 
+def test_delete_account_removes_audit_history_for_deleted_identity():
+    from app.db.base import SessionLocal
+    from app.domain.models import User, AuditLog, GovernanceEvent
+
+    headers = _auth("privacy-audit-delete@example.com")
+    client.post(
+        "/api/v1/governance/agent/check",
+        headers=headers,
+        json={"action_class": "read", "action": "read_dashboard"},
+    )
+    with SessionLocal() as db:
+        user = db.query(User).filter(User.email == "privacy-audit-delete@example.com").one()
+        user_id = user.id
+        assert db.query(AuditLog).filter(AuditLog.user_id == user_id).count() >= 1
+        assert db.query(GovernanceEvent).filter(GovernanceEvent.user_id == user_id).count() >= 1
+
+    deleted = client.post(
+        "/api/v1/privacy/delete-account",
+        headers=headers,
+        json={"password": "password12", "confirm": "DELETE"},
+    )
+    assert deleted.status_code == 200
+    with SessionLocal() as db:
+        assert db.query(AuditLog).filter(AuditLog.user_id == user_id).count() == 0
+        assert db.query(GovernanceEvent).filter(GovernanceEvent.user_id == user_id).count() == 0
+
+
 def test_security_settings_default_debug_is_disabled():
     from app.core.config import Settings
     settings = Settings(SECRET_KEY="unit-test-secret-key-that-is-long-enough")
