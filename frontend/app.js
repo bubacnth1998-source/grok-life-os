@@ -90,7 +90,16 @@ async function loadTime() {
   const el = document.getElementById("view-time");
   try {
     const agenda = await api("/time/agenda/today");
-    el.innerHTML = `<h2 class="text-lg">Time · ${esc(agenda.date)}</h2><ul>${(agenda.events||[]).map(e=>`<li>${esc(e.title)}</li>`).join("")||"<li class='text-slate-500'>Sin eventos</li>"}</ul>`;
+    el.innerHTML = `<div class="flex justify-between items-center"><h2 class="text-lg">Agenda · ${esc(agenda.date)}</h2><button id="add-event" class="rounded-xl bg-slate-800 px-3 py-2 text-sm">+ Evento</button></div><h3 class="font-medium mt-3">Eventos</h3><ul>${(agenda.events||[]).map(e=>`<li class="border-b border-slate-800 py-2">${esc(e.start_at)} · ${esc(e.title)}</li>`).join("")||"<li class='text-slate-500'>Sin eventos</li>"}</ul><h3 class="font-medium mt-4">Tareas para hoy</h3><ul>${(agenda.tasks_due||[]).map(t=>`<li class="py-1">${esc(t.title)}</li>`).join("")||"<li class='text-slate-500'>Sin tareas con vencimiento hoy</li>"}</ul>`;
+    document.getElementById("add-event").onclick = async () => {
+      const title = prompt("Título del evento");
+      if (!title?.trim()) return;
+      const when = prompt("Fecha y hora local (AAAA-MM-DDTHH:MM)", new Date(Date.now() + 3600000).toISOString().slice(0, 16));
+      if (!when || !/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}$/.test(when)) return;
+      const start_at = new Date(when).toISOString();
+      await api("/time/events", { method: "POST", body: JSON.stringify({ title: title.trim(), start_at }) });
+      loadTime();
+    };
   } catch (e) { el.innerHTML = `<p class="text-red-400">${esc(e.message)}</p>`; }
 }
 async function loadLife() {
