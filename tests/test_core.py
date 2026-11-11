@@ -24,6 +24,29 @@ def test_pwa_manifest_and_service_worker_are_served():
     assert "caches.match(request)" in worker.text
 
 
+def test_governance_agent_check_commits_allowed_and_denied_audit_events():
+    headers = _auth("governance-audit-atomic@example.com")
+    denied = client.post(
+        "/api/v1/governance/agent/check",
+        headers=headers,
+        json={"action_class": "sensitive", "action": "delete_data", "confirmed": False},
+    )
+    assert denied.status_code == 403
+    events = client.get("/api/v1/governance/events", headers=headers).json()
+    assert len(events) == 1
+    assert events[0]["allowed"] is False
+
+    allowed = client.post(
+        "/api/v1/governance/agent/check",
+        headers=headers,
+        json={"action_class": "read", "action": "read_dashboard"},
+    )
+    assert allowed.status_code == 200
+    events = client.get("/api/v1/governance/events", headers=headers).json()
+    assert len(events) == 2
+    assert events[0]["allowed"] is True
+
+
 def test_security_headers_are_present():
     response = client.get("/health")
     assert response.headers["x-content-type-options"] == "nosniff"
