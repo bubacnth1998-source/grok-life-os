@@ -17,10 +17,10 @@ class Settings(BaseSettings):
     SECRET_KEY: str = os.getenv("LIFE_OS_SECRET_KEY", "grok-life-os-dev-secret-change-in-production-32c")
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("LIFE_OS_TOKEN_EXPIRE_MINUTES", str(60 * 24 * 7)))
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:////tmp/grok_life_os.db")
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./data/grok_life_os.db")
     VERCEL: bool = False
     CORS_ORIGINS: str = os.getenv("LIFE_OS_CORS_ORIGINS", "")
-    MEDIA_PATH: str = os.getenv("LIFE_OS_MEDIA_PATH", "/tmp/grok_life_os_media")
+    MEDIA_PATH: str = os.getenv("LIFE_OS_MEDIA_PATH", "./data/media")
     OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY")
     OPENAI_BASE_URL: str = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
     OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
