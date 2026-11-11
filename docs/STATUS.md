@@ -19,6 +19,7 @@
 - Validación de configuración de producción: DEBUG desactivado y secreto único de al menos 32 caracteres.
 - Protección de despliegue: Vercel rechaza el secreto de desarrollo y cualquier SQLite; requiere PostgreSQL duradero. Driver `psycopg` añadido.
 - Interfaz: eliminado un segundo acceso duplicado a NEXUS en la navegación.
+- PWA: manifiesto instalable, icono SVG, service worker y caché limitada a la carcasa estática; las respuestas autenticadas `/api/` nunca se almacenan en caché. Pruebas de rutas añadidas; CI pendiente.
 - Prueba de aislamiento financiero: un usuario no puede crear una transacción usando la cuenta de otro usuario.
 - Documentación del contrato de integración con LIFE OS en `docs/INTEGRATION_LIFE_OS.md`: API, autenticación, límites de confianza, adapter server-side, privacidad y criterios de aceptación.
 
