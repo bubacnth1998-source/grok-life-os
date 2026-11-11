@@ -530,3 +530,54 @@ def test_registration_audit_uses_user_id_without_copying_email():
         event = db.query(AuditLog).filter(AuditLog.action == "user.register", AuditLog.user_id == user_id).one()
         assert event.detail is None
         assert email not in (event.detail or "")
+
+
+def test_business_invoice_validation_and_status_audit():
+    headers = _auth("business-validation@example.com")
+    first = client.post(
+        "/api/v1/business/invoices",
+        headers=headers,
+        json={"number": "INV-2026-001", "amount": "125.50", "issue_date": "2026-11-11", "due_date": "2026-11-20"},
+    )
+    assert first.status_code == 201, first.text
+    invoice_id = first.json()["id"]
+
+    duplicate = client.post(
+        "/api/v1/business/invoices",
+        headers=headers,
+        json={"number": "INV-2026-001", "amount": "50"},
+    )
+    assert duplicate.status_code == 409
+
+    invalid_dates = client.post(
+        "/api/v1/business/invoices",
+        headers=headers,
+        json={"number": "INV-2026-002", "amount": "50", "issue_date": "2026-11-20", "due_date": "2026-11-19"},
+    )
+    assert invalid_dates.status_code == 400
+
+    updated = client.patch(
+        f"/api/v1/business/invoices/{invoice_id}",
+        headers=headers,
+        params={"status": "paid"},
+    )
+    assert updated.status_code == 200
+    events = client.get("/api/v1/governance/events", headers=headers).json()
+    assert any(
+        event["action"] == "business.invoice_status_update"
+        and event["resource"] == f"invoice:{invoice_id}"
+        and event["detail"] == "draft->paid"
+        for event in events
+    )
+
+
+def test_business_client_rejects_blank_name_and_oversized_email():
+    headers = _auth("business-client-validation@example.com")
+    blank = client.post("/api/v1/business/clients", headers=headers, json={"name": "   "})
+    assert blank.status_code == 400
+    oversized = client.post(
+        "/api/v1/business/clients",
+        headers=headers,
+        json={"name": "Client", "email": "x" * 256 + "@example.com"},
+    )
+    assert oversized.status_code == 422
