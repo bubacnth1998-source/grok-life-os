@@ -1,6 +1,6 @@
 # STATUS
 
-**Última verificación CI histórica:** commits `6c39d4f`, `abd40bc`, `536b422`, `cc2a956` y `6830017` tienen ejecuciones aprobadas. Los cambios de protección Vercel más recientes están pendientes de su ejecución CI; no se consideran verificados hasta que terminen.
+**Última verificación CI:** la protección de persistencia Vercel del commit `8817d4d` pasó. Los cambios de pruebas IDOR, autenticación y driver PostgreSQL posteriores están pendientes de CI; no se consideran verificados hasta que terminen.
 
 ## Repositorio y despliegue
 
@@ -17,17 +17,17 @@
 - SQLite con claves foráneas activadas.
 - CORS cerrado por defecto y rechazo de wildcard.
 - Validación de configuración de producción: DEBUG desactivado y secreto único de al menos 32 caracteres.
-- Protección de despliegue: Vercel rechaza el secreto de desarrollo y SQLite bajo `/tmp` incluso en previews, evitando aceptar datos con almacenamiento efímero.
+- Protección de despliegue: Vercel rechaza el secreto de desarrollo y cualquier SQLite; requiere PostgreSQL duradero. Driver `psycopg` añadido.
 - Interfaz: eliminado un segundo acceso duplicado a NEXUS en la navegación.
 - Prueba de aislamiento financiero: un usuario no puede crear una transacción usando la cuenta de otro usuario.
 - Documentación del contrato de integración con LIFE OS en `docs/INTEGRATION_LIFE_OS.md`: API, autenticación, límites de confianza, adapter server-side, privacidad y criterios de aceptación.
 
 ## Límites conocidos
 
-- **Persistencia / despliegue Vercel:** sigue bloqueado hasta configurar y probar una base de datos duradera. El arranque en Vercel ahora falla de forma intencionada si detecta SQLite en `/tmp` o el secreto de desarrollo. No hay proveedor cloud contratado ni autorizado.
+- **Persistencia / despliegue Vercel:** sigue bloqueado hasta provisionar y probar un proyecto PostgreSQL independiente. Se ha comprobado una cotización Supabase de 0 USD/mes para crear un proyecto, pero todavía no se ha creado; la herramienta exige confirmar en qué organización debe crearse.
 - **Integración:** preparada a nivel documental, no conectada. No hay identidad federada, sincronización automática ni webhooks establecidos.
 - **Verificación funcional:** CI pasa, pero esto no sustituye pruebas E2E completas de registro, login, CRUD, backup y restauración en navegador/preview.
-- **Seguridad pendiente:** auditoría exhaustiva de IDOR y validación de entradas en todos los módulos; revisión de límites de login, CSP y política de retención de auditoría.
+- **Seguridad pendiente:** se añadieron pruebas de aislamiento entre usuarios para hábitos, memoria y calendario; su CI está pendiente. El rate limit de login actual es por proceso y no sustituye un limitador distribuido. Falta revisar CSP y política de retención de auditoría.
 - **Despliegue:** no se ha fusionado esta rama con `main` ni se ha publicado producción.
 
 No declarar el producto terminado hasta verificar persistencia durable, aislamiento por usuario en todos los módulos y pruebas E2E completas.
