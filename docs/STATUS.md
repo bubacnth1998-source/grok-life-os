@@ -2,23 +2,22 @@
 
 **Repo:** https://github.com/bubacnth1998-source/grok-life-os
 
-## Tests
+## Tests (verified)
 ```
 pytest tests/test_core.py
-13 passed
+15 passed
 ```
 
-## Addendum progress
-| Module | Status |
-|--------|--------|
-| Memory history/search | ✅ tested |
-| Governance | ✅ tested |
-| Simulator (no mutate) | ✅ tested |
-| Self-audit | ✅ tested |
-| TIME OS agenda/events | ✅ tested |
-| Life domains | ✅ tested |
-| Automation + gates | ✅ tested |
-| Habits | ✅ tested |
-| Voice dictation UI | ✅ (Web Speech, browser-dependent) |
-| Business full / Connect / Travel | ⏳ pending |
-| Cloud sync / production URL | ⏸ blocked without auth |
+## Modules implemented (API + tests where listed)
+Auth, Core dashboard, Finance ledger, Projects, Memory+history, Backup, Nexus rules, Governance, Simulator, Self-audit, Time, Life domains, Automation, Habits, Business (clients/invoices), Travel, Learning, Media metadata, Intelligence snapshot, Privacy policy/delete-account
+
+## Blockers for public URL
+Vercel/Netlify not connected — cannot invent a live link.
+
+## Local run
+```
+pip install -r requirements.txt
+export PYTHONPATH=backend
+./scripts/start.sh
+# http://127.0.0.1:8000
+```
