@@ -148,7 +148,7 @@ def test_security_settings_reject_debug_in_production():
 def test_vercel_production_rejects_ephemeral_sqlite():
     import pytest
     from app.core.config import Settings
-    with pytest.raises(ValueError, match="Vercel cannot use SQLite in /tmp"):
+    with pytest.raises(ValueError, match="Vercel requires durable PostgreSQL storage"):
         Settings(
             ENVIRONMENT="production",
             VERCEL=True,
@@ -175,7 +175,7 @@ def test_vercel_production_allows_configured_durable_database():
     settings = Settings(
         ENVIRONMENT="production",
         VERCEL=True,
-        DATABASE_URL="postgresql://user:pass@example.invalid/db",
+        DATABASE_URL="postgresql+psycopg://user:pass@example.invalid/db",
         DEBUG=False,
         SECRET_KEY="unique-production-secret-key-long-enough-123",
     )
