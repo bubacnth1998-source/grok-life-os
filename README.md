@@ -4,10 +4,10 @@ Implementación independiente de Grok (xAI). Repositorio: `grok-life-os`.
 
 ## Estado verificado
 
-- **Pruebas:** 9 tests aprobados en GitHub Actions (última ejecución completa: commit `35fb7f0`).
+- **Pruebas:** suite automatizada en GitHub Actions; consulta el estado de CI de la rama antes de cada release. No se fija un número de tests en documentación para evitar cifras obsoletas.
 - **Stack:** FastAPI + SQLAlchemy + SQLite + frontend web adaptable.
 - **Ejecución principal:** local en Linux/Chromebook, sin servicios de pago obligatorios.
-- **Preview Vercel:** disponible para validar la interfaz y las rutas HTTP. No equivale a producción ni garantiza persistencia duradera en un filesystem efímero.
+- **Vercel:** bloqueado intencionadamente para datos personales hasta disponer de PostgreSQL duradero. No usar el preview como almacenamiento.
 
 ## Arranque local
 
@@ -17,12 +17,11 @@ cd grok-life-os
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-export PYTHONPATH="${PWD}/backend"
 chmod +x scripts/start.sh
 ./scripts/start.sh
 ```
 
-Abre http://127.0.0.1:8000
+La base de datos local se guarda en ./data/grok_life_os.db y los medios en ./data/media. Conserva la carpeta data/ y exporta backups periódicos.\n\nAbre http://127.0.0.1:8000
 
 ## Módulos API
 
