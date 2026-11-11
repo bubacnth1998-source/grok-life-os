@@ -1,6 +1,15 @@
 """Grok LIFE OS — application entry."""
 import os
+import sys
 from pathlib import Path
+
+# Vercel imports this module as backend.app.main. The application uses
+# absolute imports rooted at "app", so make the backend package directory
+# available before importing any application modules.
+BACKEND = Path(__file__).resolve().parents[1]
+if str(BACKEND) not in sys.path:
+    sys.path.insert(0, str(BACKEND))
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
