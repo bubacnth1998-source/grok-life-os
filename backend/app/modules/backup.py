@@ -217,11 +217,14 @@ def import_data(body: dict = Body(...), db: Session = Depends(get_db), user: Use
             postings = item.get("postings")
             if not isinstance(postings, list) or not postings:
                 raise HTTPException(400, "Transaction requires postings")
+            ledger_scope = item.get("ledger_scope", "personal")
+            if ledger_scope not in ("personal", "business"):
+                raise HTTPException(400, "Invalid transaction ledger_scope")
             tx = LedgerTransaction(
                 user_id=user.id, date=date.fromisoformat(item["date"]),
                 description=str(item.get("description", ""))[:400],
                 category=item.get("category"), kind=kind,
-                ledger_scope=str(item.get("ledger_scope", "personal"))[:16],
+                ledger_scope=ledger_scope,
             )
             db.add(tx)
             db.flush()
@@ -232,7 +235,12 @@ def import_data(body: dict = Body(...), db: Session = Depends(get_db), user: Use
                 new_account_id = account_ids.get(old_account_id)
                 if new_account_id is None:
                     raise HTTPException(400, "Transaction references an account not included in this backup")
+                account = db.get(Account, new_account_id)
+                if not account or account.user_id != user.id or account.ledger_scope != ledger_scope:
+                    raise HTTPException(400, "Transaction ledger_scope must match its imported account")
                 amount = Decimal(str(posting["amount"]))
+                if not amount.is_finite():
+                    raise HTTPException(400, "Posting amount must be finite")
                 db.add(Posting(transaction_id=tx.id, account_id=new_account_id, amount=amount))
             created["transactions"] += 1
 
