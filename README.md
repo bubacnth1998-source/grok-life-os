@@ -40,5 +40,6 @@ GitHub Actions ejecuta `pytest -q` en pushes y pull requests para las ramas `mai
 
 - docs/ARCHITECTURE.md
 - docs/STATUS.md
+- docs/INTEGRATION_LIFE_OS.md — contrato de integración aislada con el ecosistema LIFE OS (preparación, no conexión activa).
 - docs/USE.md
 - docs/ADDENDUM.md
