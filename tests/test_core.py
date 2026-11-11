@@ -301,3 +301,20 @@ def test_automation_rejects_schedule_trigger_without_scheduler():
         },
     )
     assert response.status_code == 400
+
+
+def test_registration_audit_uses_user_id_without_copying_email():
+    from app.db.base import SessionLocal
+    from app.domain.models import AuditLog
+
+    email = "minimized-audit@example.com"
+    response = client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": "password12", "full_name": "Audit Test"},
+    )
+    assert response.status_code == 200
+    user_id = response.json()["user"]["id"]
+    with SessionLocal() as db:
+        event = db.query(AuditLog).filter(AuditLog.action == "user.register", AuditLog.user_id == user_id).one()
+        assert event.detail is None
+        assert email not in (event.detail or "")
