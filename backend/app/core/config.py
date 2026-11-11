@@ -7,7 +7,7 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    model_config = ConfigDict(env_file=".env", extra="ignore")
+    model_config = ConfigDict(env_file=".env", extra="ignore", populate_by_name=True)
     APP_NAME: str = "Grok LIFE OS"
     APP_VERSION: str = "0.1.0"
     API_PREFIX: str = "/api/v1"
