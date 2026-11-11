@@ -36,7 +36,7 @@ def register(body: RegisterIn, db: Session = Depends(get_db)):
         raise HTTPException(400, "Email already registered")
     user = User(email=email, hashed_password=get_password_hash(body.password), full_name=body.full_name.strip())
     db.add(user)
-    db.add(AuditLog(action="user.register", detail=email))
+    db.add(AuditLog(user_id=user.id, action="user.register"))
     db.commit()
     db.refresh(user)
     token = create_access_token({"sub": str(user.id), "email": user.email})
