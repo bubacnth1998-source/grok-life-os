@@ -340,6 +340,44 @@ def test_automation_rejects_schedule_trigger_without_scheduler():
     assert response.status_code == 400
 
 
+def test_user_owned_resources_reject_cross_user_access():
+    owner = _auth("idor-owner@example.com")
+    other = _auth("idor-other@example.com")
+
+    habit = client.post("/api/v1/habits", headers=owner, json={"name": "Private habit"}).json()
+    habit_attempt = client.post(f"/api/v1/habits/{habit['id']}/log", headers=other)
+    assert habit_attempt.status_code == 404
+
+    memory = client.post(
+        "/api/v1/memory",
+        headers=owner,
+        json={"kind": "fact", "title": "Private memory", "content": "secret"},
+    ).json()
+    for path, method in (
+        (f"/api/v1/memory/{memory['id']}", "patch"),
+        (f"/api/v1/memory/{memory['id']}/history", "get"),
+        (f"/api/v1/memory/{memory['id']}", "delete"),
+    ):
+        response = getattr(client, method)(
+            path,
+            headers=other,
+            json={"title": "attempt"} if method == "patch" else None,
+        )
+        assert response.status_code == 404
+
+    event = client.post(
+        "/api/v1/time/events",
+        headers=owner,
+        json={"title": "Private event", "start_at": "2026-11-12T10:00:00+00:00"},
+    ).json()
+    delete_attempt = client.delete(f"/api/v1/time/events/{event['id']}", headers=other)
+    assert delete_attempt.status_code == 404
+
+    assert len(client.get("/api/v1/memory", headers=owner).json()) == 1
+    assert len(client.get("/api/v1/habits", headers=owner).json()) == 1
+    assert len(client.get("/api/v1/time/events", headers=owner).json()) == 1
+
+
 def test_registration_audit_uses_user_id_without_copying_email():
     from app.db.base import SessionLocal
     from app.domain.models import AuditLog
