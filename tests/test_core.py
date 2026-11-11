@@ -78,3 +78,30 @@ def test_backup_rejects_tampered_payload_without_writes():
     assert response.status_code == 400
     accounts = client.get("/api/v1/finance/accounts", headers=target).json()
     assert accounts == []
+
+def test_backup_round_trip_restores_life_domains():
+    source = _auth("backup-life-source@example.com")
+    habit = client.post("/api/v1/habits", headers=source, json={"name": "Read"}).json()
+    client.post(f"/api/v1/habits/{habit['id']}/log", headers=source)
+    client.post("/api/v1/life/notes", headers=source, json={"domain": "housing", "title": "Apartment"})
+    client.post("/api/v1/time/events", headers=source, json={"title": "Appointment", "start_at": "2026-11-12T10:00:00+00:00"})
+    client.post("/api/v1/travel/trips", headers=source, json={"title": "Girona", "destination": "Spain", "budget": "150"})
+    client.post("/api/v1/learning/courses", headers=source, json={"title": "ICT basics"})
+    client.post("/api/v1/media/items", headers=source, json={"title": "Study audio", "media_type": "audio"})
+    client.post("/api/v1/business/clients", headers=source, json={"name": "Client A"})
+    exported = client.get("/api/v1/backup/export", headers=source)
+    assert exported.status_code == 200
+    backup = exported.json()
+    assert all(key in backup for key in ("habit_logs", "calendar_events", "life_notes", "trips", "courses", "media", "clients", "invoices"))
+
+    target = _auth("backup-life-target@example.com")
+    imported = client.post("/api/v1/backup/import", headers=target, json=backup)
+    assert imported.status_code == 200, imported.text
+    assert imported.json()["created"]["habit_logs"] == 1
+    assert len(client.get("/api/v1/habits", headers=target).json()) == 1
+    assert len(client.get("/api/v1/life/notes", headers=target).json()) == 1
+    assert len(client.get("/api/v1/time/events", headers=target).json()) == 1
+    assert len(client.get("/api/v1/travel/trips", headers=target).json()) == 1
+    assert len(client.get("/api/v1/learning/courses", headers=target).json()) == 1
+    assert len(client.get("/api/v1/media/items", headers=target).json()) == 1
+    assert len(client.get("/api/v1/business/clients", headers=target).json()) == 1
