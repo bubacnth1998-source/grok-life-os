@@ -22,8 +22,6 @@ NEXUS_ALLOWED = {"read", "prepare"}
 def log_event(db, user_id, actor, action_class, action, allowed, resource=None, detail=None):
     ev = GovernanceEvent(user_id=user_id, actor=actor, action_class=action_class, action=action, resource=resource, allowed=allowed, detail=detail)
     db.add(ev)
-    db.commit()
-    db.refresh(ev)
     return ev
 
 def assert_agent_allowed(action_class: str, confirmed: bool = False) -> None:
@@ -60,6 +58,8 @@ def agent_check(body: AgentActionIn, db: Session = Depends(get_db), user: User =
             assert_agent_allowed(body.action_class, body.confirmed)
     except HTTPException as e:
         log_event(db, user.id, "nexus", body.action_class, body.action, False, body.resource, body.detail or str(e.detail))
+        db.commit()
         raise
     log_event(db, user.id, "nexus", body.action_class, body.action, True, body.resource, body.detail)
+    db.commit()
     return {"allowed": True, "action_class": body.action_class, "requires_confirm": ACTION_CLASSES[body.action_class]["confirm"]}
