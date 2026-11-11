@@ -28,7 +28,7 @@ document.getElementById("btn-register").onclick = async () => {
   } catch (e) { document.getElementById("auth-err").textContent = e.message; }
 };
 document.getElementById("btn-logout").onclick = () => { token = ""; localStorage.removeItem("glo_token"); location.reload(); };
-const VIEWS = ["dash", "finance", "projects", "time", "life", "memory", "sim", "audit", "nexus"];
+const VIEWS = ["dash", "finance", "projects", "time", "life", "memory", "sim", "audit", "nexus", "workspace"];
 document.querySelectorAll(".nav").forEach((btn) => {
   btn.onclick = () => {
     document.querySelectorAll(".nav").forEach((b) => b.classList.remove("bg-slate-800"));
@@ -43,6 +43,7 @@ document.querySelectorAll(".nav").forEach((btn) => {
     if (btn.dataset.view === "sim") loadSim();
     if (btn.dataset.view === "audit") loadAudit();
     if (btn.dataset.view === "nexus") loadNexus();
+    if (btn.dataset.view === "workspace") loadWorkspace();
   };
 });
 async function loadDash() {
@@ -140,5 +141,33 @@ if (voiceButton) {
       input.focus();
     };
     voiceButton.onclick = () => { try { recognition.start(); } catch (_) {} };
+  }
+}
+
+async function loadWorkspace() {
+  const el = document.getElementById("view-workspace");
+  el.innerHTML = '<h2 class="text-lg font-medium mb-3">Workspace</h2><p class="text-sm text-slate-400 mb-4">Hábitos, negocio, viajes, aprendizaje y biblioteca. Los datos se guardan en tu cuenta.</p><div id="workspace-content" class="space-y-4">Cargando módulos…</div>';
+  const host = document.getElementById("workspace-content");
+  try {
+    const [habits, trips, courses, media, clients, invoices, rules, intelligence] = await Promise.all([
+      api("/habits"), api("/travel/trips"), api("/learning/courses"), api("/media/items"),
+      api("/business/clients"), api("/business/invoices"), api("/automation/rules"), api("/intelligence/snapshot")
+    ]);
+    host.innerHTML = `
+      <section class="rounded-xl border border-slate-800 p-3"><div class="flex justify-between items-center"><h3 class="font-medium">Hábitos</h3><button id="ws-habit" class="rounded-lg bg-slate-800 px-3 py-2">+ Añadir</button></div><ul class="mt-2 space-y-2">${habits.map(x=>`<li class="flex justify-between gap-2"><span>${esc(x.name)} · ${esc(x.frequency)}</span><button data-habit-log="${Number(x.id)}" class="rounded-lg bg-slate-800 px-3 py-1">${x.completed_today ? "Hecho" : "Completar"}</button></li>`).join("") || "<li class='text-slate-500'>Sin hábitos</li>"}</ul></section>
+      <section class="rounded-xl border border-slate-800 p-3"><div class="flex justify-between items-center"><h3 class="font-medium">Viajes</h3><button id="ws-trip" class="rounded-lg bg-slate-800 px-3 py-2">+ Viaje</button></div><ul class="mt-2">${trips.map(x=>`<li>${esc(x.title)} · ${esc(x.destination || "Destino pendiente")} · ${esc(x.status)}</li>`).join("") || "<li class='text-slate-500'>Sin viajes</li>"}</ul></section>
+      <section class="rounded-xl border border-slate-800 p-3"><div class="flex justify-between items-center"><h3 class="font-medium">Aprendizaje</h3><button id="ws-course" class="rounded-lg bg-slate-800 px-3 py-2">+ Curso</button></div><ul class="mt-2">${courses.map(x=>`<li>${esc(x.title)} · ${esc(x.progress)}%</li>`).join("") || "<li class='text-slate-500'>Sin cursos</li>"}</ul></section>
+      <section class="rounded-xl border border-slate-800 p-3"><div class="flex justify-between items-center"><h3 class="font-medium">Biblioteca multimedia</h3><button id="ws-media" class="rounded-lg bg-slate-800 px-3 py-2">+ Recurso</button></div><ul class="mt-2">${media.map(x=>`<li>${esc(x.title)} · ${esc(x.media_type)}</li>`).join("") || "<li class='text-slate-500'>Sin recursos</li>"}</ul></section>
+      <section class="rounded-xl border border-slate-800 p-3"><div class="flex justify-between items-center"><h3 class="font-medium">Negocio</h3><button id="ws-client" class="rounded-lg bg-slate-800 px-3 py-2">+ Cliente</button></div><p class="text-sm text-slate-400 mt-1">${clients.length} clientes · ${invoices.length} facturas</p><ul class="mt-2">${clients.map(x=>`<li>${esc(x.name)} · ${esc(x.email || "Sin email")}</li>`).join("") || "<li class='text-slate-500'>Sin clientes</li>"}</ul></section>
+      <section class="rounded-xl border border-slate-800 p-3"><h3 class="font-medium">Automatizaciones</h3><ul class="mt-2">${rules.map(x=>`<li>${esc(x.name)} · ${esc(x.trigger_type)} · ${x.is_active ? "Activa" : "Pausada"}</li>`).join("") || "<li class='text-slate-500'>Sin reglas</li>"}</ul><p class="text-xs text-slate-500 mt-2">Las reglas actuales solo se ejecutan manualmente o bajo confirmación; no hay scheduler en segundo plano.</p></section>
+      <section class="rounded-xl border border-slate-800 p-3"><h3 class="font-medium">Inteligencia</h3><ul class="mt-2">${intelligence.facts.map(x=>`<li>${esc(x.text)}</li>`).join("")}</ul><p class="text-xs text-slate-500 mt-2">${esc(intelligence.disclaimer)}</p></section>`;
+    document.getElementById("ws-habit").onclick = async () => { const name=prompt("Nombre del hábito"); if(name?.trim()){await api("/habits",{method:"POST",body:JSON.stringify({name})});loadWorkspace();} };
+    document.getElementById("ws-trip").onclick = async () => { const title=prompt("Nombre del viaje"); if(!title?.trim())return; const destination=prompt("Destino")||""; await api("/travel/trips",{method:"POST",body:JSON.stringify({title,destination})});loadWorkspace(); };
+    document.getElementById("ws-course").onclick = async () => { const title=prompt("Nombre del curso"); if(title?.trim()){await api("/learning/courses",{method:"POST",body:JSON.stringify({title})});loadWorkspace();} };
+    document.getElementById("ws-media").onclick = async () => { const title=prompt("Nombre del recurso"); if(!title?.trim())return; const url_or_path=prompt("URL o ruta (opcional)")||null; await api("/media/items",{method:"POST",body:JSON.stringify({title,media_type:"other",url_or_path})});loadWorkspace(); };
+    document.getElementById("ws-client").onclick = async () => { const name=prompt("Nombre del cliente"); if(name?.trim()){await api("/business/clients",{method:"POST",body:JSON.stringify({name})});loadWorkspace();} };
+    host.querySelectorAll("[data-habit-log]").forEach(btn=>btn.onclick=async()=>{await api("/habits/"+btn.dataset.habitLog+"/log",{method:"POST"});loadWorkspace();});
+  } catch (e) {
+    host.innerHTML = '<p class="text-red-400">No se pudieron cargar todos los módulos: '+esc(e.message)+'</p><p class="text-xs text-slate-500 mt-2">Comprueba que las migraciones y rutas de la API estén disponibles.</p>';
   }
 }
