@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("LIFE_OS_TOKEN_EXPIRE_MINUTES", str(60 * 24 * 7)))
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:////tmp/grok_life_os.db")
-    CORS_ORIGINS: str = os.getenv("LIFE_OS_CORS_ORIGINS", "*")
+    CORS_ORIGINS: str = os.getenv("LIFE_OS_CORS_ORIGINS", "")
     MEDIA_PATH: str = os.getenv("LIFE_OS_MEDIA_PATH", "/tmp/grok_life_os_media")
     OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY")
     OPENAI_BASE_URL: str = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
@@ -25,9 +25,10 @@ class Settings(BaseSettings):
         extra = "ignore"
     @property
     def cors_list(self):
-        if self.CORS_ORIGINS.strip() == "*":
+        value = self.CORS_ORIGINS.strip()
+        if value == "*":
             return ["*"]
-        return [x.strip() for x in self.CORS_ORIGINS.split(",") if x.strip()]
+        return [x.strip() for x in value.split(",") if x.strip()]
     @property
     def llm_enabled(self):
         if self.AI_PROVIDER == "rules":
