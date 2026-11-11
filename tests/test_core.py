@@ -153,3 +153,31 @@ def test_security_settings_reject_wildcard_cors():
             CORS_ORIGINS="*",
             SECRET_KEY="unit-test-secret-key-that-is-long-enough",
         )
+
+
+def test_finance_rejects_cross_user_account_reference():
+    owner_headers = _auth("finance-owner-isolation@example.com")
+    other_headers = _auth("finance-other-isolation@example.com")
+    account = client.post(
+        "/api/v1/finance/accounts",
+        headers=owner_headers,
+        json={"name": "Private wallet"},
+    ).json()["id"]
+
+    rejected = client.post(
+        "/api/v1/finance/transactions",
+        headers=other_headers,
+        json={
+            "account_id": account,
+            "amount": 99,
+            "kind": "income",
+            "description": "Must not cross account boundary",
+        },
+    )
+    assert rejected.status_code == 400
+    assert client.get("/api/v1/finance/transactions", headers=other_headers).json() == []
+    owner_summary = client.get(
+        "/api/v1/finance/summary?scope=personal",
+        headers=owner_headers,
+    ).json()
+    assert owner_summary["available"] == 0
