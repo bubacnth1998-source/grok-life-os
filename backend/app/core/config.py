@@ -20,9 +20,9 @@ class Settings(BaseSettings):
     VERCEL: bool = False
     CORS_ORIGINS: str = Field(default="", validation_alias="LIFE_OS_CORS_ORIGINS")
     MEDIA_PATH: str = Field(default="./data/media", validation_alias="LIFE_OS_MEDIA_PATH")
-    OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY")
-    OPENAI_BASE_URL: str = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
-    OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+    OPENAI_API_KEY: Optional[str] = None
+    OPENAI_BASE_URL: str = "https://api.openai.com/v1"
+    OPENAI_MODEL: str = "gpt-4o-mini"
     AI_PROVIDER: str = Field(default="auto", validation_alias="LIFE_OS_AI_PROVIDER")
 
     @model_validator(mode="after")
