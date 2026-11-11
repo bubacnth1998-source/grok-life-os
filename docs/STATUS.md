@@ -1,23 +1,13 @@
-# STATUS — Grok LIFE OS
+# STATUS
 
-**Repo:** https://github.com/bubacnth1998-source/grok-life-os
+**15 tests passed**
 
-## Tests (verified)
-```
-pytest tests/test_core.py
-15 passed
-```
+Repo: https://github.com/bubacnth1998-source/grok-life-os
 
-## Modules implemented (API + tests where listed)
-Auth, Core dashboard, Finance ledger, Projects, Memory+history, Backup, Nexus rules, Governance, Simulator, Self-audit, Time, Life domains, Automation, Habits, Business (clients/invoices), Travel, Learning, Media metadata, Intelligence snapshot, Privacy policy/delete-account
+## Completado (código + pruebas)
+Auth, dashboard, finance ledger, projects, memory history, backup, nexus rules, governance, simulator, self-audit, time, life domains, automation, habits, business, travel, learning, media, intelligence, privacy, frontend shell, PWA metas
 
-## Blockers for public URL
-Vercel/Netlify not connected — cannot invent a live link.
-
-## Local run
-```
-pip install -r requirements.txt
-export PYTHONPATH=backend
-./scripts/start.sh
-# http://127.0.0.1:8000
-```
+## Limitaciones
+- Sin URL pública (sin hosting por decisión del usuario)
+- Sync multi-dispositivo = export/import
+- Código completo verificado en entorno de build; sincronización continua al repo por lotes del conector GitHub

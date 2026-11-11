@@ -1,30 +1,33 @@
 # Grok LIFE OS
 
-**Implementación independiente de Grok (xAI).**  
-Repositorio exclusivo: `grok-life-os`.
+Implementación independiente de Grok (xAI). Repo: `grok-life-os`.
 
-Sistema operativo personal **local-first**: ledger financiero, proyectos, memoria, backup y NEXUS (reglas).
+## Estado
 
-## Pruebas
-
-```bash
-export PYTHONPATH="${PWD}/backend"
-pytest tests/ -v
-# 7 passed
-```
+- **Tests:** 15 passed (`pytest tests/test_core.py`)
+- **Stack:** FastAPI + SQLite + PWA local-first
+- **Sin Vercel/hosting externo** — ejecuta en Chromebook Linux
 
 ## Arranque
 
 ```bash
+git clone https://github.com/bubacnth1998-source/grok-life-os.git
+cd grok-life-os
 pip install -r requirements.txt
 export PYTHONPATH="${PWD}/backend"
+chmod +x scripts/start.sh
 ./scripts/start.sh
 ```
 
-http://127.0.0.1:8000
+Abre http://127.0.0.1:8000
+
+## Módulos API
+
+Auth, Core, Finance (ledger), Projects, Memory, Backup, Nexus, Governance, Simulator, Audit, Time, Life domains, Automation, Habits, Business, Travel, Learning, Media, Intelligence, Privacy
 
 ## Docs
 
-- [ARCHITECTURE](docs/ARCHITECTURE.md)
-- [DECISIONS](docs/DECISIONS.md)
-- [STATUS](docs/STATUS.md)
+- docs/ARCHITECTURE.md
+- docs/STATUS.md
+- docs/USE.md
+- docs/ADDENDUM.md
