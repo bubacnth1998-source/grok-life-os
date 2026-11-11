@@ -174,6 +174,20 @@ def test_delete_account_removes_user_financial_records():
     assert response.json()["ok"] is True
 
 
+def test_local_settings_default_to_project_data_directory(monkeypatch):
+    for key in (
+        "DATABASE_URL", "LIFE_OS_DEBUG", "LIFE_OS_ENV", "LIFE_OS_SECRET_KEY",
+        "LIFE_OS_CORS_ORIGINS", "LIFE_OS_MEDIA_PATH", "LIFE_OS_TOKEN_EXPIRE_MINUTES",
+        "LIFE_OS_AI_PROVIDER",
+    ):
+        monkeypatch.delenv(key, raising=False)
+    from app.core.config import Settings
+    settings = Settings(_env_file=None)
+    assert settings.DATABASE_URL == "sqlite:///./data/grok_life_os.db"
+    assert settings.MEDIA_PATH == "./data/media"
+    assert settings.DEBUG is False
+
+
 def test_security_settings_default_debug_is_disabled():
     from app.core.config import Settings
     settings = Settings(SECRET_KEY="unit-test-secret-key-that-is-long-enough")
