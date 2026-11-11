@@ -16,8 +16,8 @@ router = APIRouter(prefix="/business", tags=["business"])
 
 class ClientIn(BaseModel):
     name: str = Field(min_length=1, max_length=200)
-    email: Optional[str] = None
-    notes: Optional[str] = None
+    email: Optional[str] = Field(default=None, max_length=255)
+    notes: Optional[str] = Field(default=None, max_length=2000)
 
 class InvoiceIn(BaseModel):
     client_id: Optional[int] = None
@@ -26,7 +26,7 @@ class InvoiceIn(BaseModel):
     status: str = "draft"
     issue_date: Optional[date] = None
     due_date: Optional[date] = None
-    description: Optional[str] = None
+    description: Optional[str] = Field(default=None, max_length=2000)
 
 @router.get("/summary")
 def business_summary(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
@@ -44,7 +44,10 @@ def list_clients(db: Session = Depends(get_db), user: User = Depends(get_current
 
 @router.post("/clients", status_code=201)
 def create_client(body: ClientIn, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    c = Client(user_id=user.id, name=body.name.strip(), email=body.email, notes=body.notes)
+    name = body.name.strip()
+    if not name:
+        raise HTTPException(400, "client name cannot be blank")
+    c = Client(user_id=user.id, name=name, email=body.email.strip() if body.email else None, notes=body.notes)
     db.add(c)
     log_event(db, user.id, "user", "reversible", "business.client_create", True)
     db.commit()
@@ -60,11 +63,19 @@ def list_invoices(db: Session = Depends(get_db), user: User = Depends(get_curren
 def create_invoice(body: InvoiceIn, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     if body.status not in ("draft", "sent", "paid", "cancelled"):
         raise HTTPException(400, "invalid status")
+    number = body.number.strip()
+    if not number:
+        raise HTTPException(400, "invoice number cannot be blank")
+    if body.due_date and body.issue_date and body.due_date < body.issue_date:
+        raise HTTPException(400, "due_date must be on or after issue_date")
+    duplicate = db.scalars(select(Invoice).where(Invoice.user_id == user.id, Invoice.number == number)).first()
+    if duplicate:
+        raise HTTPException(409, "invoice number already exists")
     if body.client_id:
         c = db.get(Client, body.client_id)
         if not c or c.user_id != user.id:
             raise HTTPException(404, "Client not found")
-    inv = Invoice(user_id=user.id, client_id=body.client_id, number=body.number.strip(), amount=body.amount, status=body.status, issue_date=body.issue_date or date.today(), due_date=body.due_date, description=body.description)
+    inv = Invoice(user_id=user.id, client_id=body.client_id, number=number, amount=body.amount, status=body.status, issue_date=body.issue_date or date.today(), due_date=body.due_date, description=body.description)
     db.add(inv)
     log_event(db, user.id, "user", "reversible", "business.invoice_create", True)
     db.commit()
@@ -78,6 +89,8 @@ def update_invoice_status(invoice_id: int, status: str, db: Session = Depends(ge
         raise HTTPException(404, "Not found")
     if status not in ("draft", "sent", "paid", "cancelled"):
         raise HTTPException(400, "invalid status")
+    previous_status = inv.status
     inv.status = status
+    log_event(db, user.id, "user", "reversible", "business.invoice_status_update", True, resource=f"invoice:{invoice_id}", detail=f"{previous_status}->{status}")
     db.commit()
     return {"id": inv.id, "status": inv.status}
