@@ -1,5 +1,6 @@
 """Export / import — portable, integrity-checked recovery."""
 import hashlib
+import hmac
 import json
 from datetime import date, datetime, timezone
 from decimal import Decimal, InvalidOperation
@@ -71,7 +72,7 @@ def import_data(body: dict = Body(...), db: Session = Depends(get_db), user: Use
         unsigned = {k: v for k, v in body.items() if k != "integrity"}
         raw = json.dumps(unsigned, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
         expected = hashlib.sha256(raw.encode()).hexdigest()
-        if not hashlib.compare_digest(expected, integrity["hex"]):
+        if not hmac.compare_digest(expected, integrity["hex"]):
             raise HTTPException(400, "Backup integrity check failed")
 
     collections = ("memory", "projects", "tasks", "habits", "accounts", "transactions")
