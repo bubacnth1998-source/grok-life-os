@@ -38,13 +38,13 @@ def _clear_failures(email: str) -> None:
 
 class RegisterIn(BaseModel):
     email: EmailStr
-    password: str = Field(min_length=8)
+    password: str = Field(min_length=8, max_length=128)
     full_name: str = Field(min_length=1, max_length=255)
 
 
 class LoginIn(BaseModel):
     email: EmailStr
-    password: str
+    password: str = Field(min_length=1, max_length=128)
 
 
 class UserOut(BaseModel):
@@ -76,7 +76,7 @@ def register(body: RegisterIn, db: Session = Depends(get_db)):
     db.add(AuditLog(user_id=user.id, action="user.register", detail=None))
     db.commit()
     db.refresh(user)
-    token = create_access_token({"sub": str(user.id), "email": user.email})
+    token = create_access_token({"sub": str(user.id)})
     return TokenOut(access_token=token, user=UserOut.model_validate(user))
 
 
