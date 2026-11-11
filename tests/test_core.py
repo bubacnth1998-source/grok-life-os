@@ -353,17 +353,19 @@ def test_user_owned_resources_reject_cross_user_access():
         headers=owner,
         json={"kind": "fact", "title": "Private memory", "content": "secret"},
     ).json()
-    for path, method in (
-        (f"/api/v1/memory/{memory['id']}", "patch"),
-        (f"/api/v1/memory/{memory['id']}/history", "get"),
-        (f"/api/v1/memory/{memory['id']}", "delete"),
-    ):
-        response = getattr(client, method)(
-            path,
-            headers=other,
-            json={"title": "attempt"} if method == "patch" else None,
-        )
-        assert response.status_code == 404
+    assert client.patch(
+        f"/api/v1/memory/{memory['id']}",
+        headers=other,
+        json={"title": "attempt"},
+    ).status_code == 404
+    assert client.get(
+        f"/api/v1/memory/{memory['id']}/history",
+        headers=other,
+    ).status_code == 404
+    assert client.delete(
+        f"/api/v1/memory/{memory['id']}",
+        headers=other,
+    ).status_code == 404
 
     event = client.post(
         "/api/v1/time/events",
