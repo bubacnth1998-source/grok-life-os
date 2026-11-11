@@ -58,8 +58,23 @@ async function loadFinance() {
   try {
     const s = await api("/finance/summary?scope=personal");
     const accounts = await api("/finance/accounts");
-    el.innerHTML = `<h2 class="text-lg">Finance</h2><p class="text-sm text-slate-400">Disp ${s.available} · Res ${s.reserved}</p><ul class="mt-3">${accounts.map(a=>`<li class="border border-slate-800 rounded-lg px-3 py-2 flex justify-between"><span>${esc(a.name)}</span><span>${esc(a.balance)}</span></li>`).join("")||"<li class='text-slate-500'>Sin cuentas</li>"}</ul><button id="add-acc" class="mt-3 rounded-xl bg-slate-800 px-4 py-2 text-sm">+ Cuenta</button>`;
-    document.getElementById("add-acc").onclick = async () => { const name = prompt("Nombre"); if (!name) return; await api("/finance/accounts", { method: "POST", body: JSON.stringify({ name }) }); loadFinance(); };
+    const transactions = await api("/finance/transactions?limit=30");
+    const personalAccounts = accounts.filter(a => a.ledger_scope === "personal");
+    el.innerHTML = `<h2 class="text-lg">Finance</h2><p class="text-sm text-slate-400">Disponible ${esc(s.available)} € · Reservado ${esc(s.reserved)} € · Total ${esc(s.total)} €</p><ul class="mt-3">${personalAccounts.map(a=>`<li class="border border-slate-800 rounded-lg px-3 py-2 flex justify-between"><span>${esc(a.name)}${a.is_reserved ? " · Reservado" : ""}</span><span>${esc(a.balance)} ${esc(a.currency)}</span></li>`).join("")||"<li class='text-slate-500'>Sin cuentas personales</li>"}</ul><div class="flex flex-wrap gap-2 mt-3"><button id="add-acc" class="rounded-xl bg-slate-800 px-4 py-2 text-sm">+ Cuenta</button><button id="add-tx" class="rounded-xl bg-blue-600 px-4 py-2 text-sm" ${personalAccounts.length ? "" : "disabled"}>+ Movimiento</button></div><h3 class="font-medium mt-5">Movimientos recientes</h3><ul class="mt-2 space-y-2">${transactions.filter(t=>t.scope==="personal").map(t=>`<li class="border border-slate-800 rounded-lg px-3 py-2 flex justify-between gap-3"><span>${esc(t.date)} · ${esc(t.description)}</span><span class="${t.kind==="expense" ? "text-red-400" : "text-emerald-400"}">${t.kind==="expense" ? "−" : "+"}${esc(t.postings.reduce((sum,p)=>sum+p.amount,0).toFixed(2))} €</span></li>`).join("")||"<li class='text-slate-500'>Sin movimientos</li>"}</ul>`;
+    document.getElementById("add-acc").onclick = async () => { const name = prompt("Nombre de la cuenta"); if (!name?.trim()) return; await api("/finance/accounts", { method: "POST", body: JSON.stringify({ name: name.trim(), ledger_scope: "personal" }) }); loadFinance(); };
+    document.getElementById("add-tx").onclick = async () => {
+      const accountChoice = personalAccounts.map(a => a.id + " — " + a.name).join("\n");
+      const accountId = Number(prompt("ID de la cuenta:\n" + accountChoice, String(personalAccounts[0].id)));
+      if (!personalAccounts.some(a => a.id === accountId)) return;
+      const kind = prompt("Tipo: income o expense", "expense");
+      if (!["income", "expense"].includes(kind)) return;
+      const amount = Number(prompt("Importe en " + (personalAccounts.find(a => a.id === accountId).currency || "EUR")));
+      if (!Number.isFinite(amount) || amount <= 0) return;
+      const description = prompt("Descripción del movimiento");
+      if (!description?.trim()) return;
+      await api("/finance/transactions", { method: "POST", body: JSON.stringify({ account_id: accountId, amount, kind, description: description.trim(), ledger_scope: "personal" }) });
+      loadFinance();
+    };
   } catch (e) { el.innerHTML = `<p class="text-red-400">${esc(e.message)}</p>`; }
 }
 async function loadProjects() {
