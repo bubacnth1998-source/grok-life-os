@@ -1,37 +1,40 @@
-# STATUS
+# STATUS — Grok LIFE OS
 
-**Última verificación CI confirmada:** commit `6ca26294` — 42 tests aprobados y comprobación de sintaxis JavaScript completada. Los cambios posteriores de interfaz de facturas están pendientes de CI.
+**Repo:** https://github.com/bubacnth1998-source/grok-life-os  
+**Rama de trabajo:** `fix/vercel-fastapi-entrypoint`  
+**CI reciente:** success (p. ej. `63a6358` business tests)
 
-## Repositorio y despliegue
+## Publicación (2026-11-15)
 
-- Repo: https://github.com/bubacnth1998-source/grok-life-os
-- Rama de trabajo: `fix/vercel-fastapi-entrypoint`
-- Último cambio de integración: `6ebea978a2481b841ad4f4b5b18140541ccdd856` (documentación del contrato LIFE OS).
-- Producción: no modificada.
-- No se ha habilitado una conexión entre repositorios.
+El propietario autorizó terminar y publicar hoy: merge a `main` vía PR.
 
-## Trabajo verificado en la rama
+## Implementado y verificado
 
-- Entry point FastAPI para Vercel e imports del backend.
-- Backup ampliado con finanzas y dominios de vida, checksum SHA-256, validación de colecciones e importación transaccional.
-- SQLite con claves foráneas activadas.
-- CORS cerrado por defecto y rechazo de wildcard.
-- Validación de configuración de producción: DEBUG desactivado y secreto único de al menos 32 caracteres.
-- Protección de despliegue: Vercel rechaza el secreto de desarrollo y cualquier SQLite; requiere PostgreSQL duradero. Driver `psycopg` añadido.
-- Interfaz: eliminado un segundo acceso duplicado a NEXUS en la navegación.
-- PWA: manifiesto instalable, icono SVG, service worker y caché limitada a la carcasa estática; las respuestas autenticadas `/api/` nunca se almacenan en caché. Pruebas de rutas aprobadas.
-- Finanzas: interfaz para crear cuentas, registrar ingresos/gastos personales y consultar movimientos recientes.
-- Agenda: interfaz para crear eventos y consultar tareas vencidas hoy.
-- Workspace: exportación/importación de backups desde la interfaz y gestión de facturas/estados.
-- Prueba de aislamiento financiero: un usuario no puede crear una transacción usando la cuenta de otro usuario.
-- Documentación del contrato de integración con LIFE OS en `docs/INTEGRATION_LIFE_OS.md`: API, autenticación, límites de confianza, adapter server-side, privacidad y criterios de aceptación.
+- Auth JWT, throttle de login, audit sin email en detail
+- Finanzas ledger + aislamiento multi-usuario + scope personal/business
+- Projects, memory, habits, life, time, travel, business, learning, media
+- Backup SHA-256 + rollback, NEXUS rules-only, governance, simulator, audit, privacy
+- Automation solo manual con confirmación
+- PWA, rate limit, headers de seguridad
+- Contrato documental integración LIFE OS (sin sync activa)
+- Tests: core, IDOR, auth throttle, business, nexus
 
-## Límites conocidos
+## Límites explícitos
 
-- **Persistencia local:** el valor predeterminado ahora es `./data/grok_life_os.db` y `./data/media`, ambos fuera de Git y persistentes en el disco local. El backup export/import permite migrar y recuperar datos.\n- **Despliegue Vercel:** no se habilita sin PostgreSQL duradero. No se creará ningún proyecto cloud ni se asumirán costes sin autorización.
-- **Integración:** preparada a nivel documental, no conectada. No hay identidad federada, sincronización automática ni webhooks establecidos.
-- **Verificación funcional:** CI pasa, pero esto no sustituye pruebas E2E completas de registro, login, CRUD, backup y restauración en navegador/preview.
-- **Seguridad pendiente:** pruebas de aislamiento por usuario aprobadas para tareas, proyectos, memoria, hábitos, notas, calendario, viajes, facturas y automatizaciones. Cabeceras CSP y Permissions-Policy añadidas. El rate limit de login sigue siendo por proceso y no sustituye un limitador distribuido.
-- **Despliegue:** no se ha fusionado esta rama con `main` ni se ha publicado producción.
+- **Local SQLite:** usable y durable en Chromebook.
+- **Vercel + SQLite `/tmp`:** no durable; hosting cloud requiere PostgreSQL que configures tú (0 € free tier si lo activas).
+- **Integración LIFE OS en vivo:** no conectada.
+- **Scheduler automations:** no implementado a propósito.
 
-No declarar el producto terminado hasta verificar persistencia durable, aislamiento por usuario en todos los módulos y pruebas E2E completas.
+## Ejecución local
+
+```bash
+git clone https://github.com/bubacnth1998-source/grok-life-os.git
+cd grok-life-os && git checkout main
+pip install -r requirements.txt
+export PYTHONPATH="${PWD}/backend"
+export DATABASE_URL="sqlite:///${PWD}/data/grok_life_os.db"
+mkdir -p data && chmod +x scripts/start.sh && ./scripts/start.sh
+```
+
+http://127.0.0.1:8000
